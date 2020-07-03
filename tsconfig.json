@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "alwaysStrict": false,
+    "allowUnreachableCode": false,
+    "downlevelIteration": true,
+    "target": "ES6",
+    "lib": [
+      "ES6",
+      "DOM"
+    ],
+    "outDir": "build",
+    "module": "CommonJS",
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

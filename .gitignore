@@ -1,0 +1,5 @@
+/build/
+/dist/
+/src/*.generated.js
+/node_modules/
+/sample.lua
