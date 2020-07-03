@@ -52,6 +52,9 @@ export class Context {
   }
 }
 
+const HEADER = `require 'charon-runtime';
+`;
+
 /**
  * Configurable compiler.
  */
@@ -83,7 +86,9 @@ export class Compiler extends Context {
    */
   compile(input: string | Buffer) {
     const ast = this.parser.parse(input);
-    return this.genProgram(ast);
+    const srcOut = HEADER + this.genProgram(ast).replace(/;;/g, ';');
+    const main = this.get('main');
+    return srcOut + `\n${main}(charon.vector{...});`;
   }
 
   private genProgram(program: ast.Program): string {
