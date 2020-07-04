@@ -1,0 +1,9 @@
+; Example of library!
+; If you don't define main, all script-scope defines are exported.
+
+; Such a classic:
+(def sum [a b]
+  (+ a b))
+
+; Package-level constants:
+(def-value oh-man "Yes")

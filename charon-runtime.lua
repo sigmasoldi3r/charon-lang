@@ -3,62 +3,76 @@
 ]]
 charon = {}
 
+-- Unit type
+charon.Unit = setmetatable({}, {})
+
+local atom = {}
+
 function charon.atom(value)
-  return { value = value }
+  return setmetatable({ value = value }, Atom)
 end
+
+local Vector = {}
 
 function charon.vector(tbl)
-  return tbl
+  return setmetatable(tbl, Vector)
 end
 
+local Table = {}
+
 function charon.table(tbl)
-  return tbl
+  return setmetatable(tbl, Table)
 end
 
 function charon.println(...)
   print(...);
 end
 
-function charon.get(atom)
+function charon.print(...)
+  for _, v in pairs{...} do
+    io.write(v);
+  end
+end
+
+function charon.atom_get(atom)
   return atom.value;
 end
 
-function charon.set(atom, value)
+function charon.atom_set(atom, value)
   atom.value = value;
 end
 
+function charon.get(key, object)
+  return object[key] or charon.Unit;
+end
+
+function charon.call(fn, ...)
+  if fn == charon.Unit then
+    error('Unit is not callable!');
+  end
+  return fn(...);
+end
+
 function charon.opaque_call(fn)
+  if fn == charon.Unit then
+    error('Unit is not callable!');
+  end
   fn();
+  return charon.Unit;
 end
 
-function charon.plus(...)
-  local accum = 0;
-  for _, v in pairs{...} do
-    accum = accum + v;
-  end
-  return accum;
+function charon.file_open(file, mode)
+  return io.open(file, mode);
 end
 
-function charon.min(...)
-  local accum = 0;
-  for _, v in pairs{...} do
-    accum = accum - v;
-  end
-  return accum;
+function charon.file_close(file)
+  io.close(file);
 end
 
-function charon.div(...)
-  local accum = 0;
-  for _, v in pairs{...} do
-    accum = accum / v;
-  end
-  return accum;
+function charon.file_write(file, what)
+  file:write(what);
 end
 
-function charon.mul(...)
-  local accum = 0;
-  for _, v in pairs{...} do
-    accum = accum / v;
-  end
-  return accum;
+function charon.file_read(file)
+  return file:read(what);
 end

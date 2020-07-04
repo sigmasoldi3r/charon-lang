@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "alwaysStrict": false,
+    "alwaysStrict": true,
+    "strict": true,
     "allowUnreachableCode": false,
     "downlevelIteration": true,
     "target": "ES6",
@@ -11,7 +12,8 @@
     ],
     "outDir": "build",
     "module": "CommonJS",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "inlineSourceMap": true
   },
   "include": [
     "src/**/*.ts"
