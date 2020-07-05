@@ -5,6 +5,7 @@ import { readFileSync, fstat, writeFileSync } from 'fs';
 import { Parser } from './Parser';
 import * as ast from './ast';
 import { createHash } from 'crypto';
+import { join } from 'path';
 
 type Optional<T> = null | T;
 
@@ -87,20 +88,85 @@ function dataPlace(init: Partial<DataPlace> = {}) {
 
 type MacroFn = (name: string, args: ast.Term[]) => string;
 
+function isCatch(term: ast.Term): boolean {
+  return term.type === 'Invoke' && term.name.value === 'catch';
+}
+
+function not<A extends any[], R>(func: (...args: A) => R) {
+  return (...args: A) => !func(...args);
+}
+
+function uniquePairs<T>(list: T[]): [T, T][] {
+  const pairs: [T, T][] = [];
+  for (const top of list) {
+    for (const bot of list) {
+      if (bot === top) continue;
+      if (pairs.find(([l, r]) => l === bot && r === top) != null) continue;
+      pairs.push([top, bot]);
+    }
+  }
+  return pairs;
+}
+
+/**
+ * Creates a mapping function that maps with the supplied function.
+ * @param fn
+ * @example let x = [ [1,2], [3,4] ];
+ * x.map(forAll(x => x * 2));
+ * // Yields [ [2,4], [6,8] ];
+ */
+function forAll<T extends U[], U, R>(fn: (u: U) => R) {
+  return (iterable: T) => iterable.map(fn);
+}
+
+/**
+ * Creates a function that accepts input for a and passes the result to b,
+ * returns the overall.
+ * @param a
+ * @param b
+ * @example function addOne(x: number) { return x + 1; }
+ * function timesTwo(x: number) { return x * 2; }
+ * const addOneAndTimesTwo = compose(addOne, timesTwo);
+ * const n = addOneTimesTwo(2); // Yields 6 from (2 + 1) * 2
+ */
+function compose<T, U, R>(a: (t: T) => U, b: (u: U) => R) {
+  return (t: T) => b(a(t));
+}
+
+/**
+ * Creates a function that joins.
+ * @param joiner
+ * @example let x = [ ['a', 'b'], ['c', 'd'] ];
+ * x.map(joining(':'));
+ * // Yields [ 'a:b', 'c:d' ];
+ */
+function joining(joiner: string) {
+  return (iterable: string[]) => iterable.join(joiner);
+}
+
 /**
  * Configurable compiler.
  */
 export class Compiler extends Context<string, DataPlace> {
   static create() {
     const compiler = new Compiler();
+    compiler.set('if', dataPlace({ name: '#if', kind: DataKind.MACRO_FUNC }));
+    compiler.set('try', dataPlace({ name: '#try', kind: DataKind.MACRO_FUNC }));
+    compiler.set('catch', dataPlace({ name: '#catch', kind: DataKind.MACRO_FUNC }));
+    compiler.set('do', dataPlace({ name: '#do', kind: DataKind.MACRO_FUNC }));
     compiler.set('+', dataPlace({ name: '#plus', kind: DataKind.MACRO_FUNC }));
     compiler.set('-', dataPlace({ name: '#minus', kind: DataKind.MACRO_FUNC }));
     compiler.set('/', dataPlace({ name: '#div', kind: DataKind.MACRO_FUNC }));
     compiler.set('*', dataPlace({ name: '#mul', kind: DataKind.MACRO_FUNC }));
     compiler.set('^', dataPlace({ name: '#pow', kind: DataKind.MACRO_FUNC }));
+    compiler.set('=', dataPlace({ name: '#eq', kind: DataKind.MACRO_FUNC }));
+    compiler.set('<>', dataPlace({ name: '#neq', kind: DataKind.MACRO_FUNC }));
     compiler.set('import', dataPlace({ name: '#import', kind: DataKind.MACRO_FUNC }));
     compiler.set('def-value', dataPlace({ name: '#def-value', kind: DataKind.MACRO_FUNC }));
     compiler.set('unit', dataPlace({ name: 'charon.Unit', kind: DataKind.LOCAL }));
+    compiler.set('true', dataPlace({ name: 'charon.True', kind: DataKind.LOCAL }));
+    compiler.set('false', dataPlace({ name: 'charon.False', kind: DataKind.LOCAL }));
+    compiler.set('some?', dataPlace({ name: 'charon.some', kind: DataKind.FUNC }));
     compiler.set('atom', dataPlace({ name: 'charon.atom' }));
     compiler.set('atom/set!', dataPlace({ name: 'charon.atom_set', kind: DataKind.IMPURE_FUNC }));
     compiler.set('atom/get', dataPlace({ name: 'charon.atom_get', kind: DataKind.IMPURE_FUNC }));
@@ -188,7 +254,7 @@ export class Compiler extends Context<string, DataPlace> {
     for (const elem of invoke.args.slice(1)) {
       body.push($.genTerm(elem));
     }
-    return `do ${bind}; ${body.join(';')} end`
+    return `(function() ${bind}; ${body.join(';')} end)()`
   }
 
   private readonly macros = new Map<string, MacroFn>();
@@ -202,7 +268,41 @@ export class Compiler extends Context<string, DataPlace> {
   }
 
   private processMacro(name: string, args: ast.Term[]): string {
+    const mapReduceArgs = (joiner: string) => {
+      return uniquePairs(args)
+        .map(
+          compose(
+            forAll(this.genTerm.bind(this)), joining(joiner)))
+            .join(' and ')
+    };
     switch (name) {
+      case '#if': {
+        const condition = this.genTerm(args[0]);
+        const then = this.genTerm(args[1]);
+        const otherwise = this.termListLastReturns(args.slice(2));
+        return `(function() if ${condition} then return ${then}; else ${otherwise} end end)()`;
+      }
+      case '#do':
+        return `(function() ${this.termListLastReturns(args)} end)()`;
+      case '#try': {
+        const catching = this.termListLastReturns(args.filter(isCatch));
+        const trying = this.termListLastReturns(args.filter(not(isCatch)));
+        return `(function() local _ok, _err = pcall(function() ${trying} end); if _ok then return _err; else ${catching} end end)()`;
+      }
+      case '#catch': {
+        const binding = args[0];
+        if (!ast.isVector(binding)) throw `Catch first argument must be a binding vector with one argument!`;
+        const err = binding.list[0];
+        if (!ast.isName(err)) throw `Catch's first binding element must be a name!`;
+        const scope = new Compiler(this);
+        const scopedErr = scope.registerVar(err, DataKind.LOCAL, Scope.LOCAL);
+        const body = scope.termListLastReturns(args.slice(1));
+        return `(function(${scope.genScopedRef(scopedErr)}) ${body} end)(_err)`;
+      }
+      case '#eq':
+        return `(${mapReduceArgs('==')})`;
+        case '#neq':
+          return `(${mapReduceArgs('~=')})`;
       case '#plus':
         return `(${args.map(this.genTerm.bind(this)).join('+')})`;
       case '#minus':
@@ -311,12 +411,17 @@ export class Compiler extends Context<string, DataPlace> {
     return `${this.genScopedRef(local)} = function(${args}) ${$.genDefBody(invoke)} end;`;
   }
 
-  private genDefBody(invoke: ast.Invoke): string {
-    const list = invoke.args.slice(2);
-    const last = list.length - 1;
+  /**
+   * Grabs a list of terms and joins them, making the last return.
+   * Used in do, if and function bodies, as last term is always the return
+   * result of any of those active blocks.
+   * @param terms
+   */
+  private termListLastReturns(terms: ast.Term[]): string {
+    const last = terms.length - 1;
     const out = [];
     let i = 0;
-    for (const item of list) {
+    for (const item of terms) {
       if (i++ === last) {
         out.push(`return ${this.genTerm(item)};`)
       } else {
@@ -324,6 +429,11 @@ export class Compiler extends Context<string, DataPlace> {
       }
     }
     return out.join(';')
+  }
+
+  private genDefBody(invoke: ast.Invoke): string {
+    const list = invoke.args.slice(2);
+    return this.termListLastReturns(list);
   }
 
   private genTable(table: ast.Table): string {

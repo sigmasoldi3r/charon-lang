@@ -5,6 +5,12 @@ charon = {}
 
 -- Unit type
 charon.Unit = setmetatable({}, {})
+charon.True = true
+charon.False = false
+
+function charon.some(value)
+  return value ~= nil and value ~= charon.Unit
+end
 
 local atom = {}
 
@@ -62,7 +68,7 @@ function charon.opaque_call(fn)
 end
 
 function charon.file_open(file, mode)
-  return io.open(file, mode);
+  return io.open(file, mode) or charon.Unit;
 end
 
 function charon.file_close(file)
