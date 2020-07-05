@@ -4,7 +4,10 @@
 charon = {}
 
 -- Unit type
-charon.Unit = setmetatable({}, {})
+charon.Unit = setmetatable({}, {
+  __tostring = function() return 'Unit'; end,
+  __concat = function(this, other) return tostring(this) .. other; end
+})
 charon.True = true
 charon.False = false
 
@@ -22,6 +25,15 @@ local Vector = {}
 
 function charon.vector(tbl)
   return setmetatable(tbl, Vector)
+end
+
+function charon.vector_map(tbl, mapper)
+  assert(getmetatable(tbl) == Vector, "vector/map only accept vectors.");
+  local vec = charon.vector{}
+  for _, v in pairs(tbl) do
+    vec[#vec + 1] = mapper(v);
+  end
+  return vec
 end
 
 local Table = {}
@@ -49,7 +61,9 @@ function charon.atom_set(atom, value)
 end
 
 function charon.get(key, object)
-  return object[key] or charon.Unit;
+  local field = object[key]
+  if field == nil then return charon.Unit; end
+  return field;
 end
 
 function charon.call(fn, ...)

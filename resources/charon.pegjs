@@ -61,7 +61,7 @@ RPAREN
   { return { type: 'Token', value, name: 'RPAREN' } }
 
 NAME
-  = value:$([A-Za-z_?!@./$%~<>=^*'+-][A-Za-z0-9_?!@./$%~<>=^*'+-]*)
+  = value:$([A-Za-z_?!@./$%~<>=|&^*'+-][A-Za-z0-9_?!@./$%~<>=|&^*'+-]*)
   { return { type: 'Token', value, name: 'NAME' } }
 
 NUMBER

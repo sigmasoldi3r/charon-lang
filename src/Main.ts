@@ -144,6 +144,34 @@ function joining(joiner: string) {
   return (iterable: string[]) => iterable.join(joiner);
 }
 
+function thread(args: ast.Term[], applier: (term: ast.Term) => void): ast.Term {
+  const first = args[0];
+  let receiver = first;
+  for (const fn of args.slice(1)) {
+    if (!ast.isInvoke(fn)) throw `Only can thread through function calls!`;
+    applier.apply(fn.args, [receiver]);
+    receiver = fn;
+  }
+  return receiver;
+}
+
+/**
+ * Creates a function invoke node.
+ * @param value
+ * @param args
+ */
+function invoke(value: string, ...args: ast.Term[]): ast.Invoke {
+  return {
+    type: 'Invoke',
+    args,
+    name: {
+      type: 'Token',
+      name: 'NAME',
+      value
+    }
+  };
+}
+
 /**
  * Configurable compiler.
  */
@@ -161,12 +189,26 @@ export class Compiler extends Context<string, DataPlace> {
     compiler.set('^', dataPlace({ name: '#pow', kind: DataKind.MACRO_FUNC }));
     compiler.set('=', dataPlace({ name: '#eq', kind: DataKind.MACRO_FUNC }));
     compiler.set('<>', dataPlace({ name: '#neq', kind: DataKind.MACRO_FUNC }));
+    compiler.set('>', dataPlace({ name: '#gt', kind: DataKind.MACRO_FUNC }));
+    compiler.set('<', dataPlace({ name: '#lt', kind: DataKind.MACRO_FUNC }));
+    compiler.set('>=', dataPlace({ name: '#gteq', kind: DataKind.MACRO_FUNC }));
+    compiler.set('<=', dataPlace({ name: '#lteq', kind: DataKind.MACRO_FUNC }));
+    compiler.set('and', dataPlace({ name: '#and', kind: DataKind.MACRO_FUNC }));
+    compiler.set('or', dataPlace({ name: '#or', kind: DataKind.MACRO_FUNC }));
+    compiler.set('not', dataPlace({ name: '#not', kind: DataKind.MACRO_FUNC }));
+    compiler.set('nand', dataPlace({ name: '#nand', kind: DataKind.MACRO_FUNC }));
+    compiler.set('nor', dataPlace({ name: '#nor', kind: DataKind.MACRO_FUNC }));
+    compiler.set('xor', dataPlace({ name: '#xor', kind: DataKind.MACRO_FUNC }));
+    compiler.set('->', dataPlace({ name: '#thread-first', kind: DataKind.MACRO_FUNC }));
+    compiler.set('<-', dataPlace({ name: '#thread-last', kind: DataKind.MACRO_FUNC }));
+    compiler.set('str', dataPlace({ name: '#string', kind: DataKind.MACRO_FUNC }));
     compiler.set('import', dataPlace({ name: '#import', kind: DataKind.MACRO_FUNC }));
     compiler.set('def-value', dataPlace({ name: '#def-value', kind: DataKind.MACRO_FUNC }));
     compiler.set('unit', dataPlace({ name: 'charon.Unit', kind: DataKind.LOCAL }));
     compiler.set('true', dataPlace({ name: 'charon.True', kind: DataKind.LOCAL }));
     compiler.set('false', dataPlace({ name: 'charon.False', kind: DataKind.LOCAL }));
     compiler.set('some?', dataPlace({ name: 'charon.some', kind: DataKind.FUNC }));
+    compiler.set('vector/map', dataPlace({ name: 'charon.vector_map', kind: DataKind.FUNC }));
     compiler.set('atom', dataPlace({ name: 'charon.atom' }));
     compiler.set('atom/set!', dataPlace({ name: 'charon.atom_set', kind: DataKind.IMPURE_FUNC }));
     compiler.set('atom/get', dataPlace({ name: 'charon.atom_get', kind: DataKind.IMPURE_FUNC }));
@@ -267,6 +309,23 @@ export class Compiler extends Context<string, DataPlace> {
     return this.macros.get(name) ?? this.upper?.getMacro(name) ?? null;
   }
 
+  /**
+   * Generates an n-ary xor operation.
+   * @param args
+   */
+  private genXOr(args: ast.Term[]): string {
+    if (args.length === 0) throw `XOR function accepts at least one argument.`;
+    if (args.length === 1) return this.genTerm(args[0]);
+    let root = args[0];
+    for (const term of args.slice(1)) {
+      const a = invoke('and', invoke('not', root), term);
+      const b = invoke('and', root, invoke('not', term));
+      const or = invoke('or', a, b);
+      root = or;
+    }
+    return this.genTerm(root);
+  }
+
   private processMacro(name: string, args: ast.Term[]): string {
     const mapReduceArgs = (joiner: string) => {
       return uniquePairs(args)
@@ -301,8 +360,33 @@ export class Compiler extends Context<string, DataPlace> {
       }
       case '#eq':
         return `(${mapReduceArgs('==')})`;
-        case '#neq':
-          return `(${mapReduceArgs('~=')})`;
+      case '#neq':
+        return `(${mapReduceArgs('~=')})`;
+      case '#lt':
+        return `(${mapReduceArgs('<')})`;
+      case '#gt':
+        return `(${mapReduceArgs('>')})`;
+      case '#lteq':
+        return `(${mapReduceArgs('<=')})`;
+      case '#gteq':
+        return `(${mapReduceArgs('>=')})`;
+      case '#thread-first':
+        return this.genTerm(thread(args, Array.prototype.unshift));
+      case '#thread-last':
+        return this.genTerm(thread(args, Array.prototype.push));
+      case '#and':
+        return `(${args.map(this.genTerm.bind(this)).join(' and ')})`;
+      case '#or':
+        return `(${args.map(this.genTerm.bind(this)).join(' or ')})`;
+      case '#nand':
+        return `(not (${args.map(this.genTerm.bind(this)).join(' and ')}))`;
+      case '#nor':
+        return `(not (${args.map(this.genTerm.bind(this)).join(' or ')}))`;
+      case '#xor':
+        return this.genXOr(args);
+      case '#not':
+        if (args.length != 1) throw `not operator only accepts one argument.`;
+        return `(not ${this.genTerm(args[0])})`;
       case '#plus':
         return `(${args.map(this.genTerm.bind(this)).join('+')})`;
       case '#minus':
@@ -437,11 +521,17 @@ export class Compiler extends Context<string, DataPlace> {
   }
 
   private genTable(table: ast.Table): string {
-    return `charon.table{}`;
+    const pairs: string[] = [];
+    for (let i = 0; i < table.list.length; i += 2) {
+      const l = this.genTerm(table.list[i]);
+      const r = this.genTerm(table.list[i + 1] ?? { type: 'Token', name: 'NAME', value: 'unit' });
+      pairs.push(`[${l}] = ${r}`);
+    }
+    return `charon.table{ ${pairs.join()} }`;
   }
 
   private genVector(vector: ast.Vector): string {
-    return `charon.vector{}`
+    return `charon.vector{ ${vector.list.map(this.genTerm.bind(this)).join()} }`
   }
 
   private translateName(original: string): string {

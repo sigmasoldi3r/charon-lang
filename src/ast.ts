@@ -2,6 +2,22 @@
  *
  */
 
+export function isName(term: Term): term is NAME {
+  return term.type === 'Token' && term.name === 'NAME';
+}
+
+export function isVector(term: Term): term is Vector {
+  return term.type === 'Vector';
+}
+
+export function isTable(term: Term): term is Table {
+  return term.type === 'Table';
+}
+
+export function isInvoke(term: Term): term is Invoke {
+  return term.type === 'Invoke';
+}
+
 export type Program =
   {
     type: 'Program',
@@ -15,18 +31,6 @@ export type Term
   | Literal
   | NAME
   ;
-
-export function isName(term: Term): term is NAME {
-  return term.type === 'Token' && term.name === 'NAME';
-}
-
-export function isVector(term: Term): term is Vector {
-  return term.type === 'Vector';
-}
-
-export function isTable(term: Term): term is Table {
-  return term.type === 'Table';
-}
 
 export type Invoke =
   {
