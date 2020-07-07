@@ -48,11 +48,43 @@ function charon.vector(tbl)
   return setmetatable(tbl, Vector)
 end
 
+function charon.vector_get(tbl, key)
+  assert(getmetatable(tbl) == Vector, "vector/get only accepts vectors.");
+  assert(type(key) == 'number', "vector/get key can only be numeric.");
+  local field = tbl[key];
+  if field == nil then return charon.Unit; end
+  return field;
+end
+
+function charon.vector_join(left, right)
+  assert(getmetatable(left) == Vector, "vector/join only accepts vectors.");
+  assert(getmetatable(right) == Vector, "vector/join only accepts vectors.");
+  local vec = charon.vector{};
+  for _, v in pairs(left) do
+    vec[#vec + 1] = v;
+  end
+  for _, v in pairs(right) do
+    vec[#vec + 1] = v;
+  end
+  return tbl;
+end
+
 function charon.vector_map(tbl, mapper)
   assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
   local vec = charon.vector{}
   for k, v in pairs(tbl) do
     vec[#vec + 1] = mapper(v, k);
+  end
+  return vec
+end
+
+function charon.vector_filter(tbl, filter)
+  assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
+  local vec = charon.vector{}
+  for k, v in pairs(tbl) do
+    if filter(v, k) then
+      vec[#vec + 1] = v;
+    end
   end
   return vec
 end
@@ -90,15 +122,38 @@ function charon.atom_set(atom, value)
 end
 
 function charon.table_get(tbl, key)
-  assert(getmetatable(tbl) == Table, "table/each only accepts tables.");
+  assert(getmetatable(tbl) == Table, "table/get only accepts tables.");
   local field = tbl[key];
   if field == nil then return charon.Unit; end
   return field;
 end
 
-function charon.table_set(tbl, key, value)
-  assert(getmetatable(tbl) == Table, "table/set only accepts tables.");
-  tbl[key] = value;
+function charon.table_join(left, right)
+  assert(getmetatable(left) == Table, "table/join only accepts tables.");
+  assert(getmetatable(right) == Table, "table/join only accepts tables.");
+  local tbl = charon.table{};
+  for k, v in pairs(left) do
+    tbl[k] = v;
+  end
+  for k, v in pairs(right) do
+    tbl[k] = v;
+  end
+  return tbl;
+end
+
+function charon.table_remove(tbl, ...)
+  assert(getmetatable(tbl) == Table, "table/remove only accepts tables.");
+  local keys = {};
+  for _, key in pairs{...} do
+    keys[key] = key;
+  end
+  local out = charon.table{};
+  for k, v in pairs(tbl) do
+    if keys[k] ~= nil then
+      out[k] = v;
+    end
+  end
+  return out;
 end
 
 function charon.object_get(object, key)

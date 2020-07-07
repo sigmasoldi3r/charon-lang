@@ -16,12 +16,18 @@ the pure functions and the impure ones.
 Charon functions must be pure by default. That is true if they follow a simple
 rule: Do not invoke impure functions. That's it.
 
-Script scope is impure, however main is pure. That's because you want your
-script to define functions, which is an impure action (They mutate the global
-state).
-
-The advantage of pure functions is that they can be memoized and even constant
+The advantage\* of pure functions is that they can be memoized and even constant
 expressions (compile time inlined). Plus test-friendly, as they are idempotent.
+
+\*Note: Not currently implemented.
+
+**Disclaimer:** As Charon is a language designed to target and interface with
+Lua, the purity check is somewhat loose, and can be tricked. One example would
+be hiding the application state inside an object field, and changing the object
+field. For that reason, top level (package) context is always impure.
+
+Also this means that object manipulation (either read or write) is always
+impure, and for that same reason you can't mutate tables or vectors.
 
 Examples:
 ```clj
@@ -54,16 +60,38 @@ of "assigning" a variable as other languages do.
 
 ### Example
 
-Syntax is inspired by _Clojurescript_, but lacks macros and adds the
-`def-impure` statement.
+Syntax is inspired by _Clojurescript_.
+You can't define your own macros at the moment, but there are several included
+with the compiler, like:
+
+- `def` Which defines a package level **function**.
+- `def-impure` Which defines a package level **impure function**.
+- `def-value` Which defines a package level **constant**.
+- `let` Binding, which works like clojure's let.
+- `if` Block, the first expression is for true branch, the rest for false.
+- `do` Block which simply runs the expression list and returns the last.
+- `<-` Thread last and `->` thread first macros.
+
+Among others.
 
 ```clojure
 ; Example of import:
-(import "samples/lib" lib)
+(import lib :from "samples/lib")
+; Import can be destructured if using a binding vector.
+(import [ sum ] :from "samples/lib")
+
+; Example of CLI usage.
+(let [args (...)]
+  (vector/each args
+    (fn [arg]
+      (println "->" arg))))
 
 (println "Hello world!")
-(println "oh-man ->" (get "oh-man" lib))
-(println "(sum 2 2) ->" (call (get "sum" lib) 2 2))
+(println "oh-man ->" (object/get "oh-man" lib))
+(println "(sum 2 2) ->" (sum 2 2))
+
+; For security reasons, externs are considered impure.
+(def-extern myFunc)
 
 ; That's it folks!
 ; Impure functions tho:
@@ -75,19 +103,18 @@ Syntax is inspired by _Clojurescript_, but lacks macros and adds the
     (atom/set! state
       (+ (atom/get state) 1))))
 
-; An impure main!
-(def-impure impure-main []
-  (let [file (file/open "test.txt" "r")]
-    (if (some? file)
-      (do
-        (file/write file "Hello there!")
-        (file/close file))
-      (println "Could not open the file!")))
-  (print-state)
-  (count)
-  (print-state)
-  (count)
-  (print-state))
+(print-state)
+(count)
+(print-state)
+(count)
+(print-state)
+
+(let [file (file/open "samples/meta.lua" "w")]
+  (if (some? file)
+    (do
+      (file/write file "print('Hello there!')")
+      (file/close file))
+    (println "Could not open file for writing!")))
 
 (def-value tester true)
 (if tester
@@ -112,15 +139,15 @@ Syntax is inspired by _Clojurescript_, but lacks macros and adds the
 (def-value simple-not (not true))
 ; Other stuff
 (def-value more-things
-  { "nor" (nor true false true)
-    "nand" (nand true false true)
-    "xor" (xor true false)
-    "xor-nary" (xor true false true false true false) ; Xor is n-ary in fact.
+  { :nor (nor true false true)
+    :nand (nand true false true)
+    :xor (xor true false) ; Plain old XOR
+    :xor-nary (xor true false true false true false) ; Xor is n-ary in fact.
   })
-(println "nor =" (get "nor" more-things))
-(println "nand =" (get "nand" more-things))
-(println "xor =" (get "xor" more-things))
-(println "xor-nary =" (get "xor-nary" more-things))
+(println "nor =" (:nor more-things)) ; Shorthand!
+(println "nand =" (table/get :nand more-things)) ; Same thing!
+(println "xor =" (:xor more-things))
+(println "xor-nary =" (:xor-nary more-things))
 
 (def double [x]
   (* x 2))
@@ -128,6 +155,11 @@ Syntax is inspired by _Clojurescript_, but lacks macros and adds the
 ; Vectors
 (def-value doubles
   (vector/map [1 2 3 4] double))
+
+(def-value triples
+  (vector/map [1 2 3 4]
+    (fn [x]
+      (* x 3))))
 
 (if tester
   (+ 2 3)
@@ -162,9 +194,4 @@ Syntax is inspired by _Clojurescript_, but lacks macros and adds the
 ; expanded to their binary operator counterparts.
 (println "Arithmetic expansion! "
   (+ (- 2 5 6) 1 2 3 4 5 (* 1 2 6 8)))
-
-; Main must be pure!
-; Opaque call allows calling impure functions from pure context.
-(def main []
-  (opaque-call impure-main))
 ```
