@@ -210,9 +210,29 @@ export const stdlib = {
       name: 'charon.vector_filter'
       , kind: DataKind.FUNC
     }),
-  'vector/join':
+  'vector/merge':
     _({
-      name: 'charon.vector_join'
+      name: 'charon.vector_merge'
+      , kind: DataKind.FUNC
+    }),
+  'vector/add':
+    _({
+      name: 'charon.vector_add'
+      , kind: DataKind.FUNC
+    }),
+  'vector/drop':
+    _({
+      name: 'charon.vector_drop'
+      , kind: DataKind.FUNC
+    }),
+  'vector/drop-left':
+    _({
+      name: 'charon.vector_drop_left'
+      , kind: DataKind.FUNC
+    }),
+  'vector/len':
+    _({
+      name: 'charon.vector_len'
       , kind: DataKind.FUNC
     }),
   'table/get':
@@ -225,9 +245,19 @@ export const stdlib = {
       name: 'charon.table_remove'
       , kind: DataKind.FUNC
     }),
-  'table/join':
+  'table/merge':
     _({
-      name: 'charon.table_join'
+      name: 'charon.table_merge'
+      , kind: DataKind.FUNC
+    }),
+  'object/new':
+    _({
+      name: 'charon.object_new'
+      , kind: DataKind.FUNC
+    }),
+  'object/new-raw':
+    _({
+      name: 'charon.object_new_raw'
       , kind: DataKind.FUNC
     }),
   'object/get':

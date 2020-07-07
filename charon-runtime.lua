@@ -56,9 +56,9 @@ function charon.vector_get(tbl, key)
   return field;
 end
 
-function charon.vector_join(left, right)
-  assert(getmetatable(left) == Vector, "vector/join only accepts vectors.");
-  assert(getmetatable(right) == Vector, "vector/join only accepts vectors.");
+function charon.vector_merge(left, right)
+  assert(getmetatable(left) == Vector, "vector/merge only accepts vectors.");
+  assert(getmetatable(right) == Vector, "vector/merge only accepts vectors.");
   local vec = charon.vector{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
@@ -69,24 +69,63 @@ function charon.vector_join(left, right)
   return tbl;
 end
 
+function charon.vector_len(left)
+  assert(getmetatable(left) == Vector, "vector/add only accepts vectors.");
+  return #left;
+end
+
+function charon.vector_add(left, ...)
+  assert(getmetatable(left) == Vector, "vector/add only accepts vectors.");
+  local vec = charon.vector{};
+  for _, v in pairs(left) do
+    vec[#vec + 1] = v;
+  end
+  for _, v in pairs{...} do
+    vec[#vec + 1] = v;
+  end
+  return vec;
+end
+
+function charon.vector_drop(left, n)
+  assert(getmetatable(left) == Vector, "vector/drop only accepts vectors.");
+  assert(type(n) == 'number', "vector/drop second argument must be a number.");
+  local vec = charon.vector{};
+  local min = math.min(#left, n);
+  for i=1, min do
+    vec[i] = left[i];
+  end
+  return vec;
+end
+
+function charon.vector_drop_left(left, n)
+  assert(getmetatable(left) == Vector, "vector/drop-left only accepts vectors.");
+  assert(type(n) == 'number', "vector/drop-left second argument must be a number.");
+  local vec = charon.vector{};
+  local min = math.min(#left, n);
+  for i=min, #left do
+    vec[i] = left[i];
+  end
+  return vec;
+end
+
 function charon.vector_map(tbl, mapper)
   assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
-  local vec = charon.vector{}
+  local vec = charon.vector{};
   for k, v in pairs(tbl) do
     vec[#vec + 1] = mapper(v, k);
   end
-  return vec
+  return vec;
 end
 
 function charon.vector_filter(tbl, filter)
   assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
-  local vec = charon.vector{}
+  local vec = charon.vector{};
   for k, v in pairs(tbl) do
     if filter(v, k) then
       vec[#vec + 1] = v;
     end
   end
-  return vec
+  return vec;
 end
 
 function charon.vector_each(tbl, consumer)
@@ -128,9 +167,9 @@ function charon.table_get(tbl, key)
   return field;
 end
 
-function charon.table_join(left, right)
-  assert(getmetatable(left) == Table, "table/join only accepts tables.");
-  assert(getmetatable(right) == Table, "table/join only accepts tables.");
+function charon.table_merge(left, right)
+  assert(getmetatable(left) == Table, "table/merge only accepts tables.");
+  assert(getmetatable(right) == Table, "table/merge only accepts tables.");
   local tbl = charon.table{};
   for k, v in pairs(left) do
     tbl[k] = v;
@@ -154,6 +193,34 @@ function charon.table_remove(tbl, ...)
     end
   end
   return out;
+end
+
+function charon.object_new_raw(proto)
+  local tbl = {};
+  for k, v in pairs(proto) do
+    if type(v) == 'table' then
+      tbl[k] = charon.object_new_raw(v);
+    else
+      tbl[k] = v;
+    end
+  end
+  return tbl;
+end
+
+function charon.object_new(proto)
+  local tbl = {};
+  for k, v in pairs(proto) do
+    local key = k;
+    if type(key) == 'table' and getmetatable(key) == Symbol then
+      key = tostring(key);
+    end
+    if type(v) == 'table' then
+      tbl[key] = charon.object_new(v);
+    else
+      tbl[key] = v;
+    end
+  end
+  return tbl;
 end
 
 function charon.object_get(object, key)

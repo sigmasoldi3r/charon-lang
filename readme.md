@@ -58,6 +58,105 @@ of an atom, which in turn contains read and write operations which are impure.
 Atoms are implemented outside of the language, as charon does not have any way
 of "assigning" a variable as other languages do.
 
+## Standard library
+
+Charon standard library is small, it relies on Lua standard library for most
+things.
+
+**WARNING**: All standard library functions should be tested (Not tested yet).
+
+### Vector
+
+A vector is a collection of values. Vector is immutable, but you can join and
+append to create new ones.
+
+To create a new vector use the literal `[]`.
+
+- `vector/merge` merges two vectors into a new one.
+- `vector/add` appends elements to the vector.
+- `vector/get` returns the nth element or `unit`.
+- `vector/len` returns the length of the vector.
+- `vector/drop` returns a new vector dropping n elements from the right.
+- `vector/drop-left` returns a new vector dropping n elements from the left.
+- `vector/drop-left` returns a new vector dropping n elements from the left.
+- `vector/map` returns a new vector with the result of the mapping function for each element.
+- `vector/filter` returns a new vector filtered using the result of the filter function.
+- `vector/each` calls the function for each element, presumably for side effects. Returns `unit`.
+
+```clj
+; Example
+(def-value my-vector [1 2 3 4])
+```
+
+### Table
+
+A table is a collection of arbitrarily keyed objects. This means that a table's
+key can be anything, even `unit`!
+
+To create a new table use the literal `{}`.
+
+```clj
+; Example
+(def-value my-table
+  { :hello "World"
+    :use "symbols for keys, usually."
+    55 "But you can really use anything"
+  })
+```
+
+### Object
+
+An object is anything that is not a primitive, or a standard collection. The
+underlying implementation is a any Lua table, and is the primary method for
+interacting with existing Lua codebase.
+
+Example:
+```lua
+-- Suppose you have existing old code
+local my_object = {
+  name = "Object"
+};
+function my_object:something()
+  print("I am " .. self.name);
+end
+function my_object.static()
+  print("I am another method");
+end
+```
+
+To interface it with Lua, you can import the object (Or declare extern if
+global):
+```clj
+(import [ my_object ] :from "my_script.lua")
+
+(println
+  (object/get my_object "name"))
+
+(object/set my_object "new_field"
+  (fn [self]
+    (println "I am a method!")))
+
+; There's also a shorthand for calling methods
+(my_object:something)
+(my_object::static)
+
+; Creates a new Lua table, keys are not symbols but strings (Plain old Lua).
+(def-value my_second_object
+  (object/new
+    { :some_field "Hey"
+      :some_other 539
+    }))
+```
+
+At the moment, there are three object interaction methods:
+
+- `object/new` the only pure function, creates a new object from a table.
+  Deep translates symbols like `:some_key` to string. If for some reason you
+  want to build an object untouched use `object/new-raw`.
+- `object/new-raw` same as `object/new` but leaves keys as is.
+- `object/set` sets the field to a value, thus impure.
+- `object/get` gets the field, and as objects are mutable this is also impure.
+
 ### Example
 
 Syntax is inspired by _Clojurescript_.
@@ -72,7 +171,7 @@ with the compiler, like:
 - `do` Block which simply runs the expression list and returns the last.
 - `<-` Thread last and `->` thread first macros.
 
-Among others.
+Among others (To be documented).
 
 ```clojure
 ; Example of import:
