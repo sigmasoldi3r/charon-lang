@@ -294,3 +294,8 @@ Among others (To be documented).
 (println "Arithmetic expansion! "
   (+ (- 2 5 6) 1 2 3 4 5 (* 1 2 6 8)))
 ```
+
+More notes: import does not read any symbol from the module (Nor does export
+the module any). This means that purity checks between library calls are faked
+at the moment. The plan is to add symbols to Charon modules, and detect when
+those are not charon modules in order to make purity check stricter.
