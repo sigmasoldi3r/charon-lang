@@ -14,18 +14,40 @@ Term
   / Invoke
   / Literal
   / NAME
-  
 
 Invoke
   = LPAREN
-  _ name:NAME
+  _ target:(AccessExpression / NAME / SYMBOL)
   _ args:(a:Term _ { return a })*
   RPAREN
   {
     return {
+      _location: location(),
       type: 'Invoke',
-      name,
+      target,
       args
+    }
+  }
+
+AccessExpression
+  = root:NAME segments:AccessSegment+
+  {
+    return {
+      _location: location(),
+      type: 'AccessExpression',
+      root,
+      segments
+    }
+  }
+
+AccessSegment
+  = mode:('::?' / ':?' / '::' / ':') name:NAME
+  {
+    return {
+      _location: location(),
+      type: 'AccessSegment',
+      mode,
+      name
     }
   }
 
@@ -33,6 +55,7 @@ Vector
   = LSQUARE_BRACE _ list:(e:Term _ { return e })* RSQUARE_BRACE
   {
     return {
+      _location: location(),
       type: 'Vector',
       list
     }
@@ -42,6 +65,7 @@ Table
   = LBRACE _ list:(e:Term _ { return e })* RBRACE
   {
     return {
+      _location: location(),
       type: 'Table',
       list
     }
@@ -50,46 +74,51 @@ Table
 Literal
   = NUMBER
   / STRING
+  / SYMBOL
 
 // Token rules
 LPAREN
   = value:'('
-  { return { type: 'Token', value, name: 'LPAREN' } }
+  { return { _location: location(), type: 'Token', value, name: 'LPAREN' } }
 
 RPAREN
   = value:')'
-  { return { type: 'Token', value, name: 'RPAREN' } }
+  { return { _location: location(), type: 'Token', value, name: 'RPAREN' } }
 
 NAME
   = value:$([A-Za-z_?!@./$%~<>=|&^*'+-][A-Za-z0-9_?!@./$%~<>=|&^*'+-]*)
-  { return { type: 'Token', value, name: 'NAME' } }
+  { return { _location: location(), type: 'Token', value, name: 'NAME' } }
 
 NUMBER
   = value:$([0-9]+ ('.' [0-9]+)?)
-  { return { type: 'Token', value, name: 'NUMBER' } }
+  { return { _location: location(), type: 'Token', value, name: 'NUMBER' } }
 
 STRING
   = value:$('"' [^"]* '"')
-  { return { type: 'Token', value, name: 'D_STRING' } }
+  { return { _location: location(), type: 'Token', value, name: 'STRING' } }
+
+SYMBOL
+  = ':' value:$([A-Za-z0-9_?!@./$%~<>=|&^*'+-]+)
+  { return { _location: location(), type: 'Token', value, name: 'SYMBOL' } }
 
 LSQUARE_BRACE
   = value:'['
-  { return { type: 'Token', value, name: 'LSQUARE_BRACE' } }
+  { return { _location: location(), type: 'Token', value, name: 'LSQUARE_BRACE' } }
 
 RSQUARE_BRACE
   = value:']'
-  { return { type: 'Token', value, name: 'RSQUARE_BRACE' } }
+  { return { _location: location(), type: 'Token', value, name: 'RSQUARE_BRACE' } }
 
 LBRACE
   = value:'{'
-  { return { type: 'Token', value, name: 'LBRACE' } }
+  { return { _location: location(), type: 'Token', value, name: 'LBRACE' } }
 
 RBRACE
   = value:'}'
-  { return { type: 'Token', value, name: 'RBRACE' } }
+  { return { _location: location(), type: 'Token', value, name: 'RBRACE' } }
 
 COMMENT
   = ';' [^\r\n]* [\r\n]
 _
   = value:$(COMMENT / [ \t\r\n]+)*
-  { return { type: 'Token', value, name: '_' } }
+  { return { _location: location(), type: 'Token', value, name: '_' } }
