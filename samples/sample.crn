@@ -27,11 +27,12 @@
 ; Import can be destructured if using a binding vector.
 (import [ sum ] :from "samples/lib")
 
-; Example of CLI usage.
-(let [args (...)]
-  (vector/each args
-    (fn [arg]
-      (println "->" arg))))
+; Compose functions (Not the same as thread-thru!)
+(let [a (fn [x] (* x 2))
+      b (fn [x] (+ x 5))]
+  (def-value ab
+    (>>= a b)))
+(println "(b (a 3)) = " (ab 3))
 
 (println "Hello world!")
 (println "oh-man ->" (object/get "oh-man" lib))

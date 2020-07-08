@@ -213,6 +213,11 @@ export const stdlib = {
       name: 'charon.some'
       , kind: DataKind.FUNC
     }),
+  '>>=':
+    _({
+      name: 'charon.compose'
+      , kind: DataKind.FUNC
+    }),
   'vector/map':
     _({
       name: 'charon.vector_map'

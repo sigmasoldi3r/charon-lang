@@ -183,7 +183,7 @@ function charon.atom_set(atom, value)
   atom.value = value;
 end
 
-function charon.table_get(tbl, key)
+function charon.table_get(key, tbl)
   assert(getmetatable(tbl) == Table, "table/get only accepts tables.");
   local field = tbl[key];
   if field == nil then return charon.Unit; end
@@ -295,6 +295,12 @@ end
 
 function charon.file_read(file)
   return file:read(what);
+end
+
+function charon.compose(a, b)
+  return function(...)
+    return b(a(...));
+  end
 end
 
 return charon;
