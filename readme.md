@@ -1,4 +1,9 @@
+![charon logo](app.png)
+
 # Charon Programming Language
+![license badge](https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square)
+![issues-badge](https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square)
+![release-badges](https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square)
 
 Charon is a simple dynamic typed, functional programming language.
 
