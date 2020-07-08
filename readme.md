@@ -11,10 +11,22 @@ the pure functions and the impure ones.
 (println "Hello World!")
 ```
 
+## Binaries
+
+At the moment only windows is built, in the future binary distributions for
+other OSes will be added.
+
+Beware that the compiler and language spec is in alpha stage.
+
+Go to releases https://github.com/sigmasoldi3r/charon-lang/releases to grab
+the latest.
+
 ### Function purity
 
 Charon functions must be pure by default. That is true if they follow a simple
 rule: Do not invoke impure functions. That's it.
+
+Note that any I/O is considered impure.
 
 The advantage\* of pure functions is that they can be memoized and even constant
 expressions (compile time inlined). Plus test-friendly, as they are idempotent.
@@ -22,9 +34,11 @@ expressions (compile time inlined). Plus test-friendly, as they are idempotent.
 \*Note: Not currently implemented.
 
 **Disclaimer:** As Charon is a language designed to target and interface with
-Lua, the purity check is somewhat loose, and can be tricked. One example would
-be hiding the application state inside an object field, and changing the object
-field. For that reason, top level (package) context is always impure.
+Lua, the purity check is somewhat loose, and can be tricked. For example calling
+by reference a function who's symbol is not a function but a local might lead to
+unchecked execution of mixed contexts. For that reason anything that might be
+unchecked is considered impure. This is also a pending work for Charon, to
+include purity checks for locals and referential calls.
 
 Also this means that object manipulation (either read or write) is always
 impure, and for that same reason you can't mutate tables or vectors.
@@ -169,7 +183,26 @@ with the compiler, like:
 - `let` Binding, which works like clojure's let.
 - `if` Block, the first expression is for true branch, the rest for false.
 - `do` Block which simply runs the expression list and returns the last.
-- `<-` Thread last and `->` thread first macros.
+- `<-` Thread last and `->` thread first macros. This macro chains the
+call expression list one inside another:
+```clj
+(-> 5 (a 1) (b 2)) ; becomes
+(b (a 5 1) 2)
+(<- 5 (a 1) (b 2)) ; becomes
+(b 2 (a 1 5))
+```
+- Compose function `>>=` acts like threading macros but in fact is a function
+that actually composes functions (Therefore return new functions). This is
+considered **pure** despite that the produced function is impure.
+```clj
+(def my-fn [a] (+ a 1))
+(def other [a] (* a 2))
+(def-value third
+  (>>= my-fn other))
+; Equivalent:
+(def like-third [a]
+  (* (+ a 1) 2))
+```
 
 Among others (To be documented).
 

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "experimentalDecorators": true,
     "allowJs": true,
     "alwaysStrict": true,
     "strict": true,
@@ -13,7 +14,8 @@
     "outDir": "build",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "inlineSourceMap": true
+    "inlineSourceMap": true,
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*.ts"

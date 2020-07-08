@@ -22,6 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 /**
- * Optional type, or T or null.
+ * Simple script to patch ico files for windows.
  */
-export type Optional<T> = null | T;
+const rcedit = require('rcedit');
+const { join } = require('path');
+const { statSync, readdirSync } = require('fs');
+const { execSync } = require('child_process');
+
+const home_dir = process.env.HOME || process.env.USERPROFILE;
+const root = join(home_dir, '/.nexe');
+
+try {
+  const binaries = readdirSync(root);
+  const target = binaries.filter(s => s.startsWith('windows-x64-')).sort()[0];
+  if (target == null) {
+    console.warn('No binaries found, running nexe...');
+    console.log(execSync('yarn dist').toString())
+    console.log(execSync('yarn patch-ico').toString())
+  }
+  console.log(`Patching shared binaries (${target})...`);
+  rcedit(join(root, target), {
+    icon: 'app.ico'
+  });
+} catch(err) {
+  console.warn('No nexe folder, running nexe...');
+  console.log(execSync('yarn dist').toString())
+  console.log(execSync('yarn patch-ico').toString())
+}
