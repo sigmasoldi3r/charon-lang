@@ -26,6 +26,14 @@ Beware that the compiler and language spec is in alpha stage.
 Go to releases https://github.com/sigmasoldi3r/charon-lang/releases to grab
 the latest.
 
+## Usage notes
+
+If you want the runtime to be shared (Smaller script sizes!), you can extract it
+locally by running `charon --extract-runtime`.
+
+Otherwise you can just compile normally and provide `--embed-runtime` for every
+file.
+
 ### Function purity
 
 Charon functions must be pure by default. That is true if they follow a simple

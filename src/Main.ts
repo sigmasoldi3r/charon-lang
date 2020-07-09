@@ -28,6 +28,7 @@ import { Compiler } from './Compiler';
 import * as yargs from 'yargs';
 import { EntryPoint } from './exec';
 import { version } from '../package.json';
+import { writeFileSync, readFileSync } from 'fs';
 
 /**
  * Entry point class.
@@ -50,15 +51,21 @@ export default class Main {
         describe: 'Output file, optional.'
       })
       .option('embed-runtime', {
-        alias: 'ert',
+        alias: 'e',
         type: 'boolean',
         default: false,
         describe: 'Embeds the runtime instead of requiring it. Use for standalone environments.'
       })
+      .option('extract-runtime', {
+        alias: 'x',
+        type: 'boolean',
+        default: false,
+        describe: 'Extracts the runtime to make it available in your local environment.'
+      })
       .option('variadic-closures', {
         default: false,
         type: 'boolean',
-        alias: 'vac',
+        alias: 's',
         describe: 'Makes all immediate closures variadic (if, do and such blocks).'
       })
       // Options to be implemented:
@@ -76,6 +83,12 @@ export default class Main {
       })
       .version(version)
       .argv;
+    if (args["extract-runtime"]) {
+      console.log('Extracting runtime to current working directory...');
+      writeFileSync('charon-runtime.lua', readFileSync('charon-runtime.lua'));
+      // Prevent error when using only extract runtime.
+      if (args._.length === 0) return 0;
+    }
     if (args._.length === 0) {
       console.error('No input file provided! use --help for usage.');
       return 1;
