@@ -564,6 +564,7 @@ Caused by ${err}`, null, err);
 
   private genDefBody(invoke: ast.Invoke): string {
     const list = invoke.args.slice(2);
+    if (list.length === 0) return `return charon.Unit;`;
     return this.termListLastReturns(list);
   }
 

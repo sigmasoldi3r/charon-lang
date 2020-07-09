@@ -29,7 +29,8 @@ local charon = {}
 -- Unit type
 charon.Unit = setmetatable({}, {
   __tostring = function() return 'Unit'; end,
-  __concat = function(this, other) return tostring(this) .. other; end
+  __concat = function(this, other) return tostring(this) .. other; end,
+  __call = function() error 'Attempting to call unit value!'; end
 })
 charon.True = true
 charon.False = false
