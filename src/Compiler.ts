@@ -240,6 +240,9 @@ Caused by ${err}`, null, err);
       }
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
+      case '#for': {
+        return new Compiler(this, this.pureContext, this.options).genFor(invoke);
+      }
       case '#fn':{
         const arg0 = args[0];
         if (!ast.isVector(arg0))
@@ -365,6 +368,48 @@ Caused by ${err}`, null, err);
     const macro = this.getMacro(ref?.name ?? '');
     if (macro == null) throw `Undefined macro ${name}`;
     return macro(ref?.name ?? '', args); 
+  }
+
+  /**
+   * Generates the code for an optimized for binding.
+   * @param invoke
+   */
+  private genFor(invoke: ast.Invoke): string {
+    const { args } = invoke;
+    const args0 = args[0];
+    if (!ast.isVector(args0)) {
+      throw new SyntaxError(`For loop first argument must be a binding vector!`, args0._location);
+    }
+    if (args0.list.length < 2 || args0.list.length > 3) {
+      throw new SyntaxError(`For loop binding vector must have either two or three arguments.`, args0._location);
+    }
+    const cardinal: 2 | 3 = args0.list.length as any;
+    const v = args0.list[0];
+    if (!ast.isName(v)) {
+      throw new SyntaxError(`For loop binding vector's first argument must be a name!`, v._location);
+    }
+    this.registerVar(v, DataKind.LOCAL, Scope.LOCAL);
+    const k = args0.list[1];
+    if (cardinal === 3 && !ast.isName(k)) {
+      throw new SyntaxError(`If looping in pairs the second argument (the key) must be also a name!`, v._location);
+    }
+    if (cardinal === 3 && ast.isName(k)) {
+      this.registerVar(k, DataKind.LOCAL, Scope.LOCAL);
+    }
+    const iterable = cardinal === 3 ? args0.list[2] : k;
+    let body: Optional<string> = null;
+    const terms = args.slice(1).map(this.genTerm.bind(this)).join(';');
+    if (cardinal === 3) {
+      body = `for ${this.genTerm(k)}, ${this.genTerm(v)} in pairs(${this.genTerm(iterable)}) do ${terms} end`;
+    } else if (ast.isInvoke(iterable) && ast.isName(iterable.target) && iterable.target.value === 'range') {
+      body = `for ${this.genTerm(v)}=${iterable.args.map(this.genTerm.bind(this)).join(', ')} do ${terms} end`;
+    } else {
+      body = `for _, ${this.genTerm(v)} in pairs(${this.genTerm(iterable)}) do ${terms} end`;
+    }
+    if (body == null) {
+      throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report it.`, invoke._location);
+    }
+    return `(function(${this.closure}) ${body} end)(${this.closure})`;
   }
 
   /**

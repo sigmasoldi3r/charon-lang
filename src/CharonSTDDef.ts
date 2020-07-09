@@ -68,6 +68,11 @@ export const stdlib = {
       name: '#do'
       , kind: DataKind.MACRO_FUNC
     }),
+  'for':
+    _({
+      name: '#for'
+      , kind: DataKind.MACRO_FUNC
+    }),
   'fn':
     _({
       name: '#fn'
@@ -176,6 +181,11 @@ export const stdlib = {
   'str':
     _({
       name: 'charon.str'
+      , kind: DataKind.FUNC
+    }),
+  'range':
+    _({
+      name: 'charon.range'
       , kind: DataKind.FUNC
     }),
   'import':

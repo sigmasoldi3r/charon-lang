@@ -182,6 +182,8 @@ At the moment, there are three object interaction methods:
 
 ### Example
 
+Remember that functions are documented in [docs.md](docs.md) file.
+
 Syntax is inspired by _Clojurescript_.
 You can't define your own macros at the moment, but there are several included
 with the compiler, like:
@@ -215,127 +217,8 @@ considered **pure** despite that the produced function is impure.
 
 Among others (To be documented).
 
-```clojure
-; Example of import:
-(import lib :from "samples/lib")
-; Import can be destructured if using a binding vector.
-(import [ sum ] :from "samples/lib")
-
-; Example of CLI usage.
-(let [args (...)]
-  (vector/each args
-    (fn [arg]
-      (println "->" arg))))
-
-(println "Hello world!")
-(println "oh-man ->" (object/get "oh-man" lib))
-(println "(sum 2 2) ->" (sum 2 2))
-
-; For security reasons, externs are considered impure.
-(def-extern myFunc)
-
-; That's it folks!
-; Impure functions tho:
-
-(let [state (atom 0)]
-  (def-impure print-state []
-    (println "State: " (atom/get state)))
-  (def-impure count []
-    (atom/reset! state
-      (+ (atom/get state) 1))))
-
-(print-state)
-(count)
-(print-state)
-(count)
-(print-state)
-
-(let [file (file/open "samples/meta.lua" "w")]
-  (if (some? file)
-    (do
-      (file/write file "print('Hello there!')")
-      (file/close file))
-    (println "Could not open file for writing!")))
-
-(def-value tester true)
-(if tester
-  (+ 2 2)
-  (println "nooo")
-  (- 1 1))
-
-(if (= tester true)
-  (println "Simple dimple"))
-
-; Comparison operators
-(def-value simple-eq (= 1 2))
-(def-value complex-eq (= 1 2 3 4))
-(def-value complex-lt (> 1 2 3 4))
-(def-value complex-gt (< 1 2 3 4))
-(def-value complex-gteq (>= 1 2 3 4))
-
-; Logic operators
-(def-value all-or (or true false false true))
-(def-value all-and (and true false false true))
-; "not" has 1-arity, so the excess of arguments produces error.
-(def-value simple-not (not true))
-; Other stuff
-(def-value more-things
-  { :nor (nor true false true)
-    :nand (nand true false true)
-    :xor (xor true false) ; Plain old XOR
-    :xor-nary (xor true false true false true false) ; Xor is n-ary in fact.
-  })
-(println "nor =" (:nor more-things)) ; Shorthand!
-(println "nand =" (table/get :nand more-things)) ; Same thing!
-(println "xor =" (:xor more-things))
-(println "xor-nary =" (:xor-nary more-things))
-
-(def double [x]
-  (* x 2))
-
-; Vectors
-(def-value doubles
-  (vector/map [1 2 3 4] double))
-
-(def-value triples
-  (vector/map [1 2 3 4]
-    (fn [x]
-      (* x 3))))
-
-(if tester
-  (+ 2 3)
-  (* 5 5))
-
-; Do blocks!
-(if tester
-  (do
-    (println "Thing one")
-    (println "Thing two..."))
-  (println "This is part of the 'else'"))
-
-(def something [] unit)
-
-; Somewhat threading macros
-(println "Result:"
-  (-> 2
-    (+ 4)
-    (* 8)))
-
-(<- 2
-  (+ 4)
-  (* 8)
-  (println "Result:"))
-
-; Try catch!
-(try (something)
-  (catch [err]
-    (println "Error! " err)))
-
-; For sake of optimization, instead of reducing functions, arithmetics are
-; expanded to their binary operator counterparts.
-(println "Arithmetic expansion! "
-  (+ (- 2 5 6) 1 2 3 4 5 (* 1 2 6 8)))
-```
+See [samples/sample.crn](samples/sample.crn) for a full example of code, where
+all features are thrown into a single script.
 
 More notes: import does not read any symbol from the module (Nor does export
 the module any). This means that purity checks between library calls are faked

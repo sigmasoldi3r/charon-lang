@@ -14,6 +14,7 @@ A list of objects, functions and operators.
  - `try`
  - `catch`
  - `do`
+ - `for`
  - `fn`
  - `...`
  - `+`
@@ -36,6 +37,7 @@ A list of objects, functions and operators.
  - `->`
  - `<-`
  - `str`
+ - `range` Generates a paired iterable object.
  - `import`
  - `def-value`
  - `def-extern`

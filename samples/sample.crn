@@ -46,6 +46,20 @@
       :b "Is B!"
       :c "Is C!")))
 
+; For loop, for side-effects (Sometimes you need 'em).
+; Numeric for like this one is optimized away as a normal for
+(for [i (range 0 10)]
+  (println (str "i = " i)))
+
+; Other sources of iterable components are transformed to pairs:
+(for [v [1 2 3 4]]
+  (println (str "v = " v)))
+
+; If you put two names, the for will always run in pairs:
+; Being the second the "index" or the "key" depending on what you're iterating.
+(for [v i (range 10 20)]
+  (println (str i " = " v)))
+
 ; For security reasons, externs are considered impure.
 (def-extern myFunc)
 

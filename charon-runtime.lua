@@ -322,4 +322,28 @@ function charon.str(...)
   return out;
 end
 
+function charon.range(from, to, inc)
+  assert(type(from) == 'number' and type(to) == 'number'
+    , 'Range function expects numeric input only!')
+  assert(inc == nil or type(inc) == 'number'
+    , 'Range\'s third argument can only be a number or not provided. Saw ' .. tostring(inc) .. ' instead.')
+  if inc == nil then inc = 1; end
+  local p = {};
+  local j = 1;
+  if from > to then
+    for i=from, to, -inc do
+      p[j] = i;
+      j = j + 1;
+    end
+  elseif from == to then
+    return p;
+  else
+    for i=from, to, inc do
+      p[j] = i;
+      j = j + 1;
+    end
+  end
+  return p;
+end
+
 return charon;
