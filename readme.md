@@ -84,6 +84,10 @@ things.
 
 **WARNING**: All standard library functions should be tested (Not tested yet).
 
+Note: All functions, methods and operators are being documented at
+[docs.md](docs.md), but still being written. This document is a simple
+introduction to the language and it's features.
+
 ### Vector
 
 A vector is a collection of values. Vector is immutable, but you can join and
@@ -237,7 +241,7 @@ Among others (To be documented).
   (def-impure print-state []
     (println "State: " (atom/get state)))
   (def-impure count []
-    (atom/set! state
+    (atom/reset! state
       (+ (atom/get state) 1))))
 
 (print-state)

@@ -1,6 +1,6 @@
 {
   "name": "charon",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "preview": true,
   "description": "Charon language compiler",
   "main": "dist/index.js",
