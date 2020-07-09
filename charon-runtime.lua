@@ -183,6 +183,10 @@ function charon.atom_set(atom, value)
   atom.value = value;
 end
 
+function charon.atom_apply(atom, func, ...)
+  atom.value = func(atom.value, ...);
+end
+
 function charon.table_get(key, tbl)
   assert(getmetatable(tbl) == Table, "table/get only accepts tables.");
   local field = tbl[key];
@@ -301,6 +305,21 @@ function charon.compose(a, b)
   return function(...)
     return b(a(...));
   end
+end
+
+function charon.or_coalesce(test, val)
+  if test == nil or test == charon.Unit then
+    return val;
+  end
+  return test;
+end
+
+function charon.str(...)
+  local out = '';
+  for _, v in pairs{...} do
+    out = out .. tostring(v);
+  end
+  return out;
 end
 
 return charon;
