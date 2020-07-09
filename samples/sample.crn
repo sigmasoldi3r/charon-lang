@@ -38,12 +38,18 @@
 (println "oh-man ->" (object/get "oh-man" lib))
 (println "(sum 2 2) ->" (sum 2 2))
 
+; Simple matching:
+(let [val :b]
+  (println "when " val " = "
+    (when val
+      :a "Is A!"
+      :b "Is B!"
+      :c "Is C!")))
+
 ; For security reasons, externs are considered impure.
 (def-extern myFunc)
 
-; That's it folks!
-; Impure functions tho:
-
+; Impure functions:
 (let [state (atom 0)]
   (def-impure print-state []
     (println "State: " (atom/get state)))

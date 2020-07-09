@@ -21,7 +21,7 @@
   },
   "scripts": {
     "build": "node build.js",
-    "start": "node dist/index.js",
+    "start": "node dist/index.js samples/sample.crn",
     "dist": "nexe dist/index.js -r=charon-runtime.lua -o dist/charon.exe",
     "patch-ico": "node patch-ico.js",
     "nexe:help": "nexe --help"

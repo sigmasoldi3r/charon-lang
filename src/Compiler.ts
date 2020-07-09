@@ -226,9 +226,17 @@ Caused by ${err}`, null, err);
       }
       case '#when': {
         const condition = this.genTerm(args[0]);
-        const then = this.genTerm(args[1]);
-        const otherwise = this.termListLastReturns(args.slice(2));
-        return `(function(${this.closure}) if ${condition} then return ${then}; else ${otherwise} end end)(${this.closure})`;
+        if ((args.length - 1) % 2 !== 0) {
+          throw new SyntaxError(`When match expressions must be in pairs! Found stray key at the end of the block.`, invoke._location);
+        }
+        const cond: string[] = [];
+        for (let i = 1; i < args.length; i += 2) {
+          const c = `${condition} == ${this.genTerm(args[i])}`;
+          const b = this.genTerm(args[i + 1]);
+          const stmt = `if ${c} then return ${b};`;
+          cond.push(stmt);
+        }
+        return `(function(${this.closure}) ${cond.join(' else')} end end)(${this.closure})`;
       }
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
