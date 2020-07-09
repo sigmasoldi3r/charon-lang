@@ -175,8 +175,8 @@ export const stdlib = {
     }),
   'str':
     _({
-      name: '#string'
-      , kind: DataKind.MACRO_FUNC
+      name: 'charon.str'
+      , kind: DataKind.FUNC
     }),
   'import':
     _({
@@ -191,6 +191,11 @@ export const stdlib = {
   'def-extern':
     _({
       name: '#def-extern'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'when':
+    _({
+      name: '#when'
       , kind: DataKind.MACRO_FUNC
     }),
   'unit':
@@ -211,6 +216,11 @@ export const stdlib = {
   'some?':
     _({
       name: 'charon.some'
+      , kind: DataKind.FUNC
+    }),
+  'or?':
+    _({
+      name: 'charon.or_coalesce'
       , kind: DataKind.FUNC
     }),
   '>>=':
@@ -268,6 +278,11 @@ export const stdlib = {
       name: 'charon.table_get'
       , kind: DataKind.FUNC
     }),
+  'table/get?':
+    _({
+      name: 'charon.table_get_or'
+      , kind: DataKind.FUNC
+    }),
   'table/remove':
     _({
       name: 'charon.table_remove'
@@ -302,9 +317,14 @@ export const stdlib = {
     _({
       name: 'charon.atom'
     }),
-  'atom/set!':
+  'atom/reset!':
     _({
       name: 'charon.atom_set'
+      , kind: DataKind.IMPURE_FUNC
+    }),
+  'atom/apply!':
+    _({
+      name: 'charon.atom_apply'
       , kind: DataKind.IMPURE_FUNC
     }),
   'atom/get':

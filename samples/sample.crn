@@ -48,7 +48,7 @@
   (def-impure print-state []
     (println "State: " (atom/get state)))
   (def-impure count []
-    (atom/set! state
+    (atom/reset! state
       (+ (atom/get state) 1))))
 
 (print-state)

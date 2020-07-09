@@ -224,6 +224,12 @@ Caused by ${err}`, null, err);
         const otherwise = this.termListLastReturns(args.slice(2));
         return `(function(${this.closure}) if ${condition} then return ${then}; else ${otherwise} end end)(${this.closure})`;
       }
+      case '#when': {
+        const condition = this.genTerm(args[0]);
+        const then = this.genTerm(args[1]);
+        const otherwise = this.termListLastReturns(args.slice(2));
+        return `(function(${this.closure}) if ${condition} then return ${then}; else ${otherwise} end end)(${this.closure})`;
+      }
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
       case '#fn':{
