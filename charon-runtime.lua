@@ -411,6 +411,7 @@ function charon.neq(l, r, ...)
       result = result and il ~= ir;
     end
   end
+  return result;
 end
 
 -- Mapping for macro >
@@ -421,6 +422,7 @@ function charon.gt(l, r, ...)
       result = result and il > ir;
     end
   end
+  return result;
 end
 
 -- Mapping for macro <
@@ -431,6 +433,7 @@ function charon.lt(l, r, ...)
       result = result and il < ir;
     end
   end
+  return result;
 end
 
 -- Mapping for macro >=
@@ -441,6 +444,7 @@ function charon.gteq(...)
       result = result and il >= ir;
     end
   end
+  return result;
 end
 
 -- Mapping for macro <=
@@ -451,6 +455,7 @@ function charon.lteq(...)
       result = result and il <= ir;
     end
   end
+  return result;
 end
 
 -- Mapping for macro and
@@ -492,8 +497,8 @@ end
 
 -- Mapping for macro xor
 function charon.xor(...)
-  
+  error('Not implemented');
 end
 
-
+-- Namespace.
 return charon;
