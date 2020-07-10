@@ -182,10 +182,12 @@ end
 
 function charon.atom_set(atom, value)
   atom.value = value;
+  return charon.Unit;
 end
 
 function charon.atom_apply(atom, func, ...)
   atom.value = func(atom.value, ...);
+  return atom.value;
 end
 
 function charon.table_get(key, tbl)
@@ -292,10 +294,12 @@ end
 
 function charon.file_close(file)
   io.close(file);
+  return charon.Unit;
 end
 
 function charon.file_write(file, what)
   file:write(what);
+  return charon.Unit;
 end
 
 function charon.file_read(file)
