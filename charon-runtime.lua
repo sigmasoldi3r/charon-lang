@@ -347,4 +347,149 @@ function charon.range(from, to, inc)
   return p;
 end
 
+-- Functions
+
+-- Mapping for macro +
+function charon.plus(result, ...)
+  for _, v in pairs{...} do
+    result = result + v;
+  end
+  return result;
+end
+
+-- Mapping for macro -
+function charon.minus(result, ...)
+  for _, v in pairs{...} do
+    result = result - v;
+  end
+  return result;
+end
+
+-- Mapping for macro /
+function charon.div(result, ...)
+  for _, v in pairs{...} do
+    result = result / v;
+  end
+  return result;
+end
+
+-- Mapping for macro *
+function charon.mul(result, ...)
+  for _, v in pairs{...} do
+    result = result * v;
+  end
+  return result;
+end
+
+-- Mapping for macro ^
+function charon.pow(result, ...)
+  for _, v in pairs{...} do
+    result = result ^ v;
+  end
+  return result;
+end
+
+-- Mapping for macro =
+function charon.eq(l, r, ...)
+  local result = l == r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il == ir;
+    end
+  end
+end
+
+-- Mapping for macro <>
+function charon.neq(l, r, ...)
+  local result = l ~= r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il ~= ir;
+    end
+  end
+end
+
+-- Mapping for macro >
+function charon.gt(l, r, ...)
+  local result = l > r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il > ir;
+    end
+  end
+end
+
+-- Mapping for macro <
+function charon.lt(l, r, ...)
+  local result = l < r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il < ir;
+    end
+  end
+end
+
+-- Mapping for macro >=
+function charon.gteq(...)
+  local result = l >= r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il >= ir;
+    end
+  end
+end
+
+-- Mapping for macro <=
+function charon.lteq(...)
+  local result = l <= r;
+  for _, il in pairs{...} do
+    for _, ir in pairs{...} do
+      result = result and il <= ir;
+    end
+  end
+end
+
+-- Mapping for macro and
+function charon._and(...)
+  local result = ...;
+  for _, v in pairs{...} do
+    if k > 1 then
+      result = result and v;
+    end
+  end
+  return result;
+end
+
+-- Mapping for macro or
+function charon._or(...)
+  local result = ...;
+  for _, v in pairs{...} do
+    if k > 1 then
+      result = result or v;
+    end
+  end
+  return result;
+end
+
+-- Mapping for macro not
+function charon._not(value)
+  return not value;
+end
+
+-- Mapping for macro nand
+function charon.nand(...)
+  return not charon._and(...);
+end
+
+-- Mapping for macro nor
+function charon.nor(...)
+  return not charon._or(...);
+end
+
+-- Mapping for macro xor
+function charon.xor(...)
+  
+end
+
+
 return charon;

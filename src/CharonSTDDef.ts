@@ -87,86 +87,103 @@ export const stdlib = {
     _({
       name: '#plus'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.plus'
     }),
   '-':
     _({
       name: '#minus'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.minus'
     }),
   '/':
     _({
       name: '#div'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.div'
     }),
   '*':
     _({
       name: '#mul'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.mul'
     }),
   '^':
     _({
       name: '#pow'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.pow'
     }),
   '=':
     _({
       name: '#eq'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.eq'
     }),
   '<>':
     _({
       name: '#neq'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.neq'
     }),
   '>':
     _({
       name: '#gt'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.gt'
     }),
   '<':
     _({
       name: '#lt'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.lt'
     }),
   '>=':
     _({
       name: '#gteq'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.gteq'
     }),
   '<=':
     _({
       name: '#lteq'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.lteq'
     }),
   'and':
     _({
       name: '#and'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon._and'
     }),
   'or':
     _({
       name: '#or'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon._or'
     }),
   'not':
     _({
       name: '#not'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon._not'
     }),
   'nand':
     _({
       name: '#nand'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.nand'
     }),
   'nor':
     _({
       name: '#nor'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.nor'
     }),
   'xor':
     _({
       name: '#xor'
       , kind: DataKind.MACRO_FUNC
+      , fallbackRef: 'charon.xor'
     }),
   '->':
     _({

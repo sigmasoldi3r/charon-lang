@@ -47,6 +47,7 @@ import {
   r
 } from './CompilerExtras';
 import { stdlib } from './CharonSTDDef';
+import { version } from '../package.json';
 
 /**
  * Configurable compiler context.
@@ -75,6 +76,37 @@ export class Compiler extends Context<string, DataPlace> {
     writeFileSync(target, out);
   }
 
+  private bug(what: string, context: string, location: ast.CodeLocation) {
+    const tpl: Record<string, any> = {
+      title: `[v${version}] Code generation fault at ${context}`,
+      labels: `bug,codegen`,
+      body: `## System information
+\`\`\`
+Compiler version v${version}
+Platform ${process.platform}
+\`\`\`
+
+Context: ${context}
+
+## Code check
+
+Code that produced the issue:
+\`\`\`clj
+${this.code}
+\`\`\`
+
+Location: Line ${location.start.line}, column ${location.start.column}
+Starts at \`${location.start.offset}\` and ends at \`${location.end.offset}\`
+
+Please do not hesitate to provide additional steps for reproduction.
+
+`
+    };
+    const args = Object.keys(tpl).map(k => `${k}=${encodeURIComponent(tpl[k])}`).join('&');
+    const url = `https://github.com/sigmasoldi3r/charon-lang/issues/new?${args};`
+    return `This likely indicates a bug in ${what}, please open an issue here ${url}\n`
+  }
+
   /**
    * Lua target. Defaults to 5.3, a simple float.
    */
@@ -91,6 +123,7 @@ export class Compiler extends Context<string, DataPlace> {
 
   private readonly parser = new Parser();
   private readonly PKG = '__local_package';
+  private code = '';
 
   /**
    * Compiles the source code to target language.
@@ -98,6 +131,7 @@ export class Compiler extends Context<string, DataPlace> {
    * @param sourceName The name of the source, for error reporting.
    */
   compile(input: string | Buffer, sourceName: string) {
+    this.code = input.toString();
     const ast = this.parser.parse(input);
     const rt = this.options.embedRuntime
       ? `local charon = (function()${('\n' + readFileSync('charon-runtime.lua').toString()).replace(/\n/g, '\n  ')}\nend)();`
@@ -145,8 +179,8 @@ Caused by ${err}`, null, err);
       const name = args.list[i];
       if (!ast.isName(name)) throw `Let binding pairs must start with names!`;
       const val = args.list[i + 1];
-      const imported = this.registerVar(name, DataKind.LOCAL);
-      bind.push(`local ${imported.name} = ${this.genTerm(val)}`);
+      const bound = this.registerVar(name, DataKind.LOCAL);
+      bind.push(`local ${bound.name} = ${this.genTerm(val)}`);
     }
     return bind.join(';')
   }
@@ -154,13 +188,10 @@ Caused by ${err}`, null, err);
   private genLet(invoke: ast.Invoke): string {
     const first = invoke.args[0]
     if (!ast.isVector(first)) throw 'First should be a binding array!';
-    const $ = new Compiler(this, undefined, this.options);
+    const $ = new Compiler(this, this.pureContext, this.options);
     const bind = $.genLetLocalBind(first);
-    const body = [];
-    for (const elem of invoke.args.slice(1)) {
-      body.push($.genTerm(elem));
-    }
-    return `(function(${this.closure}) ${bind}; ${body.join(';')} end)(${this.closure})`
+    return `(function(${$.closure}) ${bind}; ${
+      $.termListLastReturns(invoke.args.slice(1))} end)(${$.closure})`
   }
 
   private readonly macros = new Map<string, MacroFn>();
@@ -215,7 +246,7 @@ Caused by ${err}`, null, err);
       case '#let':
           return this.genLet(invoke);
       case '#apply':
-          return '';
+          return ``;
       case '#three-dots':
         return `charon.vector{...}`;
       case '#if': {
@@ -230,13 +261,20 @@ Caused by ${err}`, null, err);
           throw new SyntaxError(`When match expressions must be in pairs! Found stray key at the end of the block.`, invoke._location);
         }
         const cond: string[] = [];
+        let elseFields: ast.Term[] = [];
         for (let i = 1; i < args.length; i += 2) {
-          const c = `${condition} == ${this.genTerm(args[i])}`;
+          const key = args[i];
+          if (ast.isWildcard(key)) {
+            elseFields.push(args[i + 1]);
+            continue;
+          }
+          const c = `${condition} == ${this.genTerm(key)}`;
           const b = this.genTerm(args[i + 1]);
           const stmt = `if ${c} then return ${b};`;
           cond.push(stmt);
         }
-        return `(function(${this.closure}) ${cond.join(' else')} end end)(${this.closure})`;
+        const elseExpr = elseFields.length === 0 ? '' : ` else ${this.termListLastReturns(elseFields)}`
+        return `(function(${this.closure}) ${cond.join(' else')}${elseExpr} end end)(${this.closure})`;
       }
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
@@ -407,7 +445,9 @@ Caused by ${err}`, null, err);
       body = `for _, ${this.genTerm(v)} in pairs(${this.genTerm(iterable)}) do ${terms} end`;
     }
     if (body == null) {
-      throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report it.`, invoke._location);
+      throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report the issue here ${
+        this.bug('the code generator', 'for inliner', invoke._location)
+      }.`, invoke._location);
     }
     return `(function(${this.closure}) ${body} end)(${this.closure})`;
   }
@@ -434,8 +474,7 @@ Caused by ${err}`, null, err);
         _location: invoke._location
       };
       return this.genInvoke(getter);
-    }
-    if (ast.isName(invoke.target)) {
+    } else if (ast.isName(invoke.target)) {
       const ref = this.getCheckedReference(invoke.target);
       if (this.pureContext && ref.kind === DataKind.IMPURE_FUNC) {
         throw new PurityViolationError(`Impure functions cannot be invoked from a pure context!`);
@@ -443,14 +482,53 @@ Caused by ${err}`, null, err);
       if (ref.kind === DataKind.MACRO_FUNC) {
         return this.processMacro(invoke);
       }
-      const args = invoke.args.map(this.genTerm.bind(this)).join();
+      const args = invoke.args.map(term => {
+        const out = this.genTerm(term);
+        if (out[0] === '#') {
+          return this.tryFallbackMacro(term);
+        }
+        return out;
+      }).join();
       return `${this.genScopedRef(ref)}(${args})`;
+    } else if (ast.isAccessExpression(invoke.target)) {
+      const target = this.genAccessExpression(invoke.target);
+      const args = invoke.args.map(this.genTerm.bind(this));
+      return `${target}(${args.join()})`;
     }
-    const args = invoke.args.map(this.genTerm.bind(this)).join();
-    const access = this.genAccessExpression(invoke.target);
-    return `${access}(${args})`;
+    throw new CharonError(`Attempting to generate a function call outside the boundaries of a valid target. ${
+      this.bug('the code generator', 'generate call expression', invoke._location)}`, invoke._location);
   }
 
+  /**
+   * Attempts to provide a fallback functions for function-like macros like
+   * arithmetic operations.
+   * This is used when referencing such macros as functions, like in atom/apply!
+   * or apply.
+   * Throws syntax error if attempting to reference a non-function macro like
+   * if, let or do.
+   * @example (+ 1 1) ; Macro
+   * @example (atom/apply! a + 1) ; Function reference
+   * @param term
+   */
+  private tryFallbackMacro(term: ast.Term): string {
+    if (!ast.isName(term)) {
+      throw new CharonError(`Invalid use of fallback macro checker. This likely indicates a bug in the code generator, please issue this bug at ${
+        this.bug('the code generator', 'fallback macro generation', term._location)}`);
+    }
+    const ref = this.get(term.value);
+    const value = ref?.fallbackRef;
+    if (value == null) {
+      throw new CharonError(`Invalid use of fallback macro checker: No name found in the registry, or fallback not defined. Please issue this bug at ${
+        this.bug('the code generator', 'fallback macro generation', term._location)}`);
+    }
+    return value;
+  }
+
+  /**
+   * Generates code for object-field access expressions, such as:
+   * @example (obj::static_field:method 1 2 3)
+   * @param expr
+   */
   private genAccessExpression(expr: ast.AccessExpression): string {
     const rootRef = this.getCheckedReference(expr.root);
     const root = this.genScopedRef(rootRef);
@@ -603,6 +681,7 @@ Caused by ${err}`, null, err);
       case 'AccessExpression': return this.genAccessExpression(term);
       case 'Token':
         switch (term.name) {
+          case 'WILDCARD': throw new SyntaxError(`Unexpected wildcard symbol.`, term._location);
           case 'NAME': {
             const local = this.get(term.value);
             if (local == null) return this.translateName(term.value, term._location);

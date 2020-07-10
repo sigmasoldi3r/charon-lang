@@ -91,6 +91,7 @@ export interface DataPlace {
   original: string;
   kind: DataKind;
   scope: Scope;
+  fallbackRef?: string;
 }
 export const DEFAULT_DATA_PLACE: DataPlace = {
   name: '',

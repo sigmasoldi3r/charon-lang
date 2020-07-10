@@ -47,6 +47,10 @@ export function isInvoke(term: Term): term is Invoke {
   return term.type === 'Invoke';
 }
 
+export function isWildcard(term: Term): term is WILDCARD {
+  return term.type === 'Token' && term.name === 'WILDCARD';
+}
+
 export type CodeLocation =
   {
     start: { offset: number, line: number, column: number };
@@ -69,8 +73,9 @@ export type Term
   | Table
   | Invoke
   | Literal
-  | NAME
   | AccessExpression
+  | NAME
+  | WILDCARD
   ;
 
 export type Invoke =
@@ -142,6 +147,9 @@ export type LBRACE =
 
 export type RBRACE =
   { type: 'Token', value: string, name: 'RBRACE' } & LocatedCode
+
+export type WILDCARD =
+  { type: 'Token', value: string, name: 'WILDCARD' } & LocatedCode
 
 export type _ =
   { type: 'Token', value: string, name: '_' } & LocatedCode

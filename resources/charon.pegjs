@@ -14,6 +14,7 @@ Term
   / Invoke
   / Literal
   / NAME
+  / WILDCARD
 
 Invoke
   = LPAREN
@@ -116,6 +117,10 @@ LBRACE
 RBRACE
   = value:'}'
   { return { _location: location(), type: 'Token', value, name: 'RBRACE' } }
+
+WILDCARD
+  = value:'#'
+  { return { _location: location(), type: 'Token', value, name: 'WILDCARD' }}
 
 COMMENT
   = ';' [^\r\n]* [\r\n]
