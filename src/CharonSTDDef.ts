@@ -250,6 +250,16 @@ export const stdlib = {
       name: 'charon.some'
       , kind: DataKind.FUNC
     }),
+  'unit?':
+    _({
+      name: 'charon.is_unit'
+      , kind: DataKind.FUNC
+    }),
+  'nothing?':
+    _({
+      name: 'charon.is_nothing'
+      , kind: DataKind.FUNC
+    }),
   'or?':
     _({
       name: 'charon.or_coalesce'

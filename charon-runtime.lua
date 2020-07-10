@@ -52,6 +52,14 @@ function charon.some(value)
   return value ~= nil and value ~= charon.Unit;
 end
 
+function charon.is_nothing(value)
+  return value == nil;
+end
+
+function charon.is_unit(value)
+  return value == charon.Unit;
+end
+
 local atom = {}
 
 function charon.atom(value)
