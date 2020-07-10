@@ -13,7 +13,7 @@ the pure functions and the impure ones.
 
 ```clj
 ; Hello world
-(println "Hello World!")
+(println! "Hello World!")
 ```
 
 ## Binaries
@@ -64,11 +64,11 @@ Examples:
 
 ; This is impure
 (def-impure shout []
-  (println "Hello!"))
+  (println! "Hello!"))
 
 ; This is legal
 (def-impure something []
-  (println "2 + 2 =" (sum 2 2)))
+  (println! "2 + 2 =" (sum 2 2)))
 
 ; This is illegal
 (def some-other []
@@ -160,12 +160,12 @@ global):
 ```clj
 (import [ my_object ] :from "my_script.lua")
 
-(println
+(println!
   (object/get my_object "name"))
 
 (object/set my_object "new_field"
   (fn [self]
-    (println "I am a method!")))
+    (println! "I am a method!")))
 
 ; There's also a shorthand for calling methods
 (my_object:something)
