@@ -32,15 +32,15 @@
       b (fn [x] (+ x 5))]
   (def-value ab
     (>>= a b)))
-(println "(b (a 3)) = " (ab 3))
+(println! "(b (a 3)) = " (ab 3))
 
-(println "Hello world!")
-(println "oh-man ->" (object/get "oh-man" lib))
-(println "(sum 2 2) ->" (sum 2 2))
+(println! "Hello world!")
+(println! "oh-man ->" (object/get "oh-man" lib))
+(println! "(sum 2 2) ->" (sum 2 2))
 
 ; Simple matching:
 (let [val :b]
-  (println "when " val " = "
+  (println! "when " val " = "
     (when val
       :a "Is A!"
       :b "Is B!"
@@ -50,16 +50,16 @@
 ; For loop, for side-effects (Sometimes you need 'em).
 ; Numeric for like this one is optimized away as a normal for
 (for [i (range 0 10)]
-  (println (str "i = " i)))
+  (println! (str "i = " i)))
 
 ; Other sources of iterable components are transformed to pairs:
 (for [v [1 2 3 4]]
-  (println (str "v = " v)))
+  (println! (str "v = " v)))
 
 ; If you put two names, the for will always run in pairs:
 ; Being the second the "index" or the "key" depending on what you're iterating.
 (for [v i (range 10 20)]
-  (println (str i " = " v)))
+  (println! (str i " = " v)))
 
 ; For security reasons, externs are considered impure.
 (def-extern myFunc)
@@ -67,7 +67,7 @@
 ; Impure functions:
 (let [state (atom 0)]
   (def-impure print-state []
-    (println "State: " (atom/get state)))
+    (println! "State: " (atom/get state)))
   (def-impure count []
     (atom/reset! state
       (+ (atom/get state) 1))))
@@ -83,16 +83,16 @@
     (do
       (file/write file "print('Hello there!')")
       (file/close file))
-    (println "Could not open file for writing!")))
+    (println! "Could not open file for writing!")))
 
 (def-value tester true)
 (if tester
   (+ 2 2)
-  (println "nooo")
+  (println! "nooo")
   (- 1 1))
 
 (if (= tester true)
-  (println "Simple dimple"))
+  (println! "Simple dimple"))
 
 ; Comparison operators
 (def-value simple-eq (= 1 2))
@@ -113,10 +113,10 @@
     :xor (xor true false) ; Plain old XOR
     :xor-nary (xor true false true false true false) ; Xor is n-ary in fact.
   })
-(println "nor =" (:nor more-things)) ; Shorthand!
-(println "nand =" (table/get :nand more-things)) ; Same thing!
-(println "xor =" (:xor more-things))
-(println "xor-nary =" (:xor-nary more-things))
+(println! "nor =" (:nor more-things)) ; Shorthand!
+(println! "nand =" (table/get :nand more-things)) ; Same thing!
+(println! "xor =" (:xor more-things))
+(println! "xor-nary =" (:xor-nary more-things))
 
 (def double [x]
   (* x 2))
@@ -137,14 +137,14 @@
 ; Do blocks!
 (if tester
   (do
-    (println "Thing one")
-    (println "Thing two..."))
-  (println "This is part of the 'else'"))
+    (println! "Thing one")
+    (println! "Thing two..."))
+  (println! "This is part of the 'else'"))
 
 (def something [] unit)
 
 ; Somewhat threading macros
-(println "Result:"
+(println! "Result:"
   (-> 2
     (+ 4)
     (* 8)))
@@ -152,14 +152,14 @@
 (<- 2
   (+ 4)
   (* 8)
-  (println "Result:"))
+  (println! "Result:"))
 
 ; Try catch!
 (try (something)
   (catch [err]
-    (println "Error! " err)))
+    (println! "Error! " err)))
 
 ; For sake of optimization, instead of reducing functions, arithmetics are
 ; expanded to their binary operator counterparts.
-(println "Arithmetic expansion! "
+(println! "Arithmetic expansion! "
   (+ (- 2 5 6) 1 2 3 4 5 (* 1 2 6 8)))

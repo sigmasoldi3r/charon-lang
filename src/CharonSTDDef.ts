@@ -53,6 +53,11 @@ export const stdlib = {
       name: '#if'
       , kind: DataKind.MACRO_FUNC
     }),
+  'throw':
+    _({
+      name: 'error'
+      , kind: DataKind.FUNC
+    }),
   'try':
     _({
       name: '#try'
@@ -367,12 +372,12 @@ export const stdlib = {
     _({
       name: 'charon.call'
     }),
-  'println':
+  'println!':
     _({
       name: 'charon.println'
       , kind: DataKind.IMPURE_FUNC
     }),
-  'print':
+  'print!':
     _({
       name: 'charon.print'
       , kind: DataKind.IMPURE_FUNC

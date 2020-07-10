@@ -91,7 +91,7 @@ NAME
   { return { _location: location(), type: 'Token', value, name: 'NAME' } }
 
 NUMBER
-  = value:$([0-9]+ ('.' [0-9]+)?)
+  = value:$('-'? [0-9]+ ('.' [0-9]+)?)
   { return { _location: location(), type: 'Token', value, name: 'NUMBER' } }
 
 STRING
