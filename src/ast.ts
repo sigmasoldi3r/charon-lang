@@ -81,7 +81,7 @@ export type Term
 export type Invoke =
   {
     type: 'Invoke';
-    target: AccessExpression | NAME | SYMBOL;
+    target: AccessExpression | NAME | SYMBOL | WILDCARD;
     args: Term[];
   } & LocatedCode
 

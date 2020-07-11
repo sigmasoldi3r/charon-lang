@@ -18,7 +18,7 @@ Term
 
 Invoke
   = LPAREN
-  _ target:(AccessExpression / NAME / SYMBOL)
+  _ target:(AccessExpression / NAME / SYMBOL / WILDCARD)
   _ args:(a:Term _ { return a })*
   RPAREN
   {
@@ -119,7 +119,7 @@ RBRACE
   { return { _location: location(), type: 'Token', value, name: 'RBRACE' } }
 
 WILDCARD
-  = value:'#'
+  = value:$('#' [0-9#']*)
   { return { _location: location(), type: 'Token', value, name: 'WILDCARD' }}
 
 COMMENT

@@ -43,10 +43,10 @@ export const stdlib = {
       name: '#let'
       , kind: DataKind.MACRO_FUNC
     }),
-  'apply':
+  '__self_ref__':
     _({
-      name: '#apply'
-      , kind: DataKind.MACRO_FUNC
+      name: '__self_ref__'
+      , kind: DataKind.LOCAL
     }),
   'if':
     _({

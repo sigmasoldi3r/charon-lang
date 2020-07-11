@@ -236,7 +236,7 @@ Caused by ${err}`, null, err);
         .map(
           compose(
             forAll(this.genTerm.bind(this)), joining(joiner)))
-            .join(' and ')
+            .join(' and ');
     };
     switch (ref.name) {
       case '#def':
@@ -245,8 +245,6 @@ Caused by ${err}`, null, err);
           return this.genDef(invoke, false);
       case '#let':
           return this.genLet(invoke);
-      case '#apply':
-          return ``;
       case '#three-dots':
         return `charon.vector{...}`;
       case '#if': {
@@ -286,7 +284,7 @@ Caused by ${err}`, null, err);
         if (!ast.isVector(arg0))
           throw new SyntaxError(`Function expression's first argument must be a binding vector!`);
         const argInput = this.genBindingVector(arg0);
-        return `(function(${argInput}) ${this.termListLastReturns(args.slice(1))} end)`;
+        return `(function() local __self_ref__; __self_ref__ = (function(${argInput}) ${this.termListLastReturns(args.slice(1))} end); return __self_ref__; end)()`;
       }
       case '#try': {
         const catching = this.termListLastReturns(args.filter(isCatch));
@@ -474,8 +472,22 @@ Caused by ${err}`, null, err);
         _location: invoke._location
       };
       return this.genInvoke(getter);
-    } else if (ast.isName(invoke.target)) {
-      const ref = this.getCheckedReference(invoke.target);
+    } else if (ast.isName(invoke.target) || ast.isWildcard(invoke.target)) {
+      const target = invoke.target;
+      if (ast.isWildcard(target)) {
+        if (target.value !== '#\'') {
+          throw new SyntaxError(`Unexpected token ${target.value}`, target._location);
+        }
+        const args = invoke.args.map(term => {
+          const out = this.genTerm(term);
+          if (out[0] === '#') {
+            return this.tryFallbackMacro(term);
+          }
+          return out;
+        }).join();
+        return `__self_ref__(${args})`;
+      }
+      const ref = this.getCheckedReference(target);
       if (this.pureContext && ref.kind === DataKind.IMPURE_FUNC) {
         throw new PurityViolationError(`Impure functions cannot be invoked from a pure context!`);
       }
@@ -617,7 +629,7 @@ Caused by ${err}`, null, err);
     const local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.GLOBAL);
     const $ = new Compiler(this, pure, this.options);
     const args = $.genBindingVector(bind);
-    return `${this.genScopedRef(local)} = function(${args}) ${$.genDefBody(invoke)} end;`;
+    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}) ${$.genDefBody(invoke)} end; return __self_ref__; end)()`;
   }
 
   /**
