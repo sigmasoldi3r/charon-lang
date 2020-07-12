@@ -52,12 +52,29 @@ function charon.some(value)
   return value ~= nil and value ~= charon.Unit;
 end
 
+function charon.in_args(value, ...)
+  for _, v in pairs{...} do
+    if value == v then
+      return true;
+    end
+  end
+  return false;
+end
+
 function charon.is_nothing(value)
   return value == nil;
 end
 
 function charon.is_unit(value)
   return value == charon.Unit;
+end
+
+function charon.isnt_nothing(value)
+  return value ~= nil;
+end
+
+function charon.isnt_unit(value)
+  return value ~= charon.Unit;
 end
 
 local atom = {}
@@ -104,6 +121,32 @@ end
 function charon.vector_len(left)
   assert(getmetatable(left) == Vector, "vector/add only accepts vectors.");
   return #left;
+end
+
+function charon.vector_reduce_indexed(vec, fn, value)
+  assert(getmetatable(vec) == Vector, "vector/reduce-indexed only accepts vectors.");
+  local start = 1;
+  if value == nil then
+    start = 2;
+    value = vec[1];
+  end
+  for i=start, #vec do
+    value = fn(value, vec[i], i);
+  end
+  return value;
+end
+
+function charon.vector_reduce(vec, fn, value)
+  assert(getmetatable(vec) == Vector, "vector/reduce only accepts vectors.");
+  local start = 1;
+  if value == nil then
+    start = 2;
+    value = vec[1];
+  end
+  for i=start, #vec do
+    value = fn(value, vec[i]);
+  end
+  return value;
 end
 
 function charon.vector_add(left, ...)
@@ -445,7 +488,7 @@ function charon.lt(l, r, ...)
 end
 
 -- Mapping for macro >=
-function charon.gteq(...)
+function charon.gteq(l, r, ...)
   local result = l >= r;
   for _, il in pairs{...} do
     for _, ir in pairs{...} do
@@ -456,7 +499,7 @@ function charon.gteq(...)
 end
 
 -- Mapping for macro <=
-function charon.lteq(...)
+function charon.lteq(l, r, ...)
   local result = l <= r;
   for _, il in pairs{...} do
     for _, ir in pairs{...} do
@@ -467,23 +510,17 @@ function charon.lteq(...)
 end
 
 -- Mapping for macro and
-function charon._and(...)
-  local result = ...;
+function charon._and(result, ...)
   for _, v in pairs{...} do
-    if k > 1 then
-      result = result and v;
-    end
+    result = result and v;
   end
   return result;
 end
 
 -- Mapping for macro or
-function charon._or(...)
-  local result = ...;
+function charon._or(result, ...)
   for _, v in pairs{...} do
-    if k > 1 then
-      result = result or v;
-    end
+    result = result or v;
   end
   return result;
 end

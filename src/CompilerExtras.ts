@@ -28,6 +28,7 @@ SOFTWARE.
 
 import { Optional } from './Optional';
 import * as ast from './ast';
+import { SyntaxError } from './errors';
 
 /**
  * Contextual nested key-svalue storage.
@@ -173,15 +174,49 @@ export function joining(joiner: string) {
   return (iterable: string[]) => iterable.join(joiner);
 }
 
-export function thread(args: ast.Term[], applier: (term: ast.Term) => void): ast.Term {
+/**
+ * Consumer type of applier.
+ */
+export type Applier = (term: ast.Term) => void;
+
+/**
+ * Generates the threading macro body (Expands the macro).
+ * @param args
+ * @param applier
+ */
+export function thread(args: ast.Term[], applier: Applier): ast.Term {
   const first = args[0];
   let receiver = first;
   for (const fn of args.slice(1)) {
-    if (!ast.isInvoke(fn)) throw `Only can thread through function calls!`;
+    if (!ast.isInvoke(fn)) {
+      throw new SyntaxError(
+        `Only can thread through function calls!`,
+        fn._location
+      );
+    }
     applier.apply(fn.args, [receiver]);
     receiver = fn;
   }
   return receiver;
+}
+
+export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Applier): ast.Vector {
+  const args0 = args[0];
+  const list = args.slice(1).map(term => {
+    if (!ast.isInvoke(term)) {
+      throw new SyntaxError(
+        `Only can thread (parallel) through function calls!`,
+        term._location
+      );
+    }
+    applier.apply(term.args, [args0]);
+    return term;
+  });
+  return {
+    type: 'Vector',
+    _location: invoke._location,
+    list
+  };
 }
 
 /**

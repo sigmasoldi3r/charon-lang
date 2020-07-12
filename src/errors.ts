@@ -26,6 +26,57 @@ SOFTWARE.
  */
 import { Optional } from './Optional';
 import * as ast from './ast';
+import { r } from './CompilerExtras';
+
+export type LocatableError = Error & { location?: ast.CodeLocation };
+
+/**
+ * This error is a wrapper for compilation failures due to thrown exceptions.
+ */
+export class CompileError extends Error {
+  constructor(
+    source: string,
+    input: string,
+    public readonly cause: Error
+  ) {
+    super(CompileError.format(cause, source, input));
+  }
+
+  /**
+   * Formats the error nicely so hints in the source code are shown.
+   * @param sourceName
+   * @param input
+   */
+  public static format(cause: LocatableError, sourceName: string, input: string) {
+    const location = (() => {
+      if (cause instanceof CharonError) {
+        return cause.origin;
+      }
+      if (cause.location != null) {
+        return cause.location;
+      }
+      return null;
+    })();
+    const { line, column } = location?.start ?? { line: null, column: null };
+    const [before, sub, after] = (() => {
+      if (location == null) return '<unknown>';
+      const { start, end } = location;
+      const s = Math.max(start.offset - 16, 0);
+      const e = Math.min(end.offset + 16, input.length);
+      const before = input.toString().slice(s, start.offset);
+      const after = input.toString().slice(end.offset, e);
+      return [
+        before.slice(Math.max(0, before.indexOf('\n') + 1), before.length),
+        input.toString().slice(start.offset, end.offset),
+        after.slice(0, Math.min(after.length, after.lastIndexOf('\n')))
+      ];
+    })();
+    return `${sourceName}:${line}:${column}
+  ${before}${sub}${after}
+  ${r` ${before}`}${r`^${sub}`}
+${cause}`;
+  }
+}
 
 /**
  * Default language error.

@@ -34,9 +34,34 @@ A list of objects, functions and operators.
  - `nand`
  - `nor`
  - `xor`
- - `->`
- - `<-`
- - `str`
+ - `->` Threads each result of the call to the rightmost argument of the next
+ function.
+```clj
+; Example of usage for (->)
+(-> 5
+  (+ 1)
+  (- 2))
+; Translates to
+(- 2 (+ 1 5))
+```
+ - `<-` Like the thread-right macro, but passes to the leftmost argument.
+ - `->>` The multiple application macro passes the first element as rightmost
+ element of all function calls and stores each result in a vector.
+```clj
+; Example
+(->> 1 (+ 2) (- 2))
+; Translates to
+[(+ 2 1) (- 2 1)]
+```
+ - `<<-` Like the multiple application macro (right version), but passes the
+ element to the leftmost place.
+ - `str` Creates a new string concatenating all elements stringified.
+```clj
+; Example
+(assert
+  (str "Hello " "world!")
+  "Hello world!")
+```
  - `range` Generates a paired iterable object.
  - `import`
  - `def-value`
@@ -100,6 +125,7 @@ Methods related:
  - `vector/drop`
  - `vector/drop-left`
  - `vector/len`
+ - `vector/reduce`
 
 ### table
 

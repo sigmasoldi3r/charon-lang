@@ -29,6 +29,7 @@ import * as yargs from 'yargs';
 import { EntryPoint } from './exec';
 import { version } from '../package.json';
 import { writeFileSync, readFileSync } from 'fs';
+import { CharonError } from './errors';
 
 /**
  * Entry point class.

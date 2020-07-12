@@ -190,6 +190,18 @@ export const stdlib = {
       , kind: DataKind.MACRO_FUNC
       , fallbackRef: 'charon.xor'
     }),
+  '->>':
+    _({
+      name: '#thread-parallel'
+      , kind: DataKind.MACRO_FUNC
+      // , fallbackRef: 'charon.thread_parallel'
+    }),
+  '<<-':
+    _({
+      name: '#thread-parallel-last'
+      , kind: DataKind.MACRO_FUNC
+      // , fallbackRef: 'charon.thread_parallel_last'
+    }),
   '->':
     _({
       name: '#thread-first'
@@ -250,6 +262,11 @@ export const stdlib = {
       name: 'charon.some'
       , kind: DataKind.FUNC
     }),
+  'in?':
+    _({
+      name: 'charon.in_args'
+      , kind: DataKind.FUNC
+    }),
   'unit?':
     _({
       name: 'charon.is_unit'
@@ -258,6 +275,16 @@ export const stdlib = {
   'nothing?':
     _({
       name: 'charon.is_nothing'
+      , kind: DataKind.FUNC
+    }),
+  'not-unit?':
+    _({
+      name: 'charon.isnt_unit'
+      , kind: DataKind.FUNC
+    }),
+  'not-nothing?':
+    _({
+      name: 'charon.isnt_nothing'
       , kind: DataKind.FUNC
     }),
   'or?':
@@ -313,6 +340,16 @@ export const stdlib = {
   'vector/len':
     _({
       name: 'charon.vector_len'
+      , kind: DataKind.FUNC
+    }),
+  'vector/reduce':
+    _({
+      name: 'charon.vector_reduce'
+      , kind: DataKind.FUNC
+    }),
+  'vector/reduce-indexed':
+    _({
+      name: 'charon.vector_reduce_indexed'
       , kind: DataKind.FUNC
     }),
   'table/get':
@@ -391,6 +428,11 @@ export const stdlib = {
     _({
       name: 'charon.print'
       , kind: DataKind.IMPURE_FUNC
+    }),
+  'assert':
+    _({
+      name: 'charon.assert'
+      , kind: DataKind.FUNC
     }),
   'file/open':
     _({

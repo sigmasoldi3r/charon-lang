@@ -26,7 +26,7 @@ import { Parser } from './Parser';
 import * as ast from './ast';
 import { createHash } from 'crypto';
 import { Optional } from './Optional';
-import { ReferenceError, BadMacroDefinition, SyntaxError, PurityViolationError, CharonError } from './errors';
+import { ReferenceError, BadMacroDefinition, SyntaxError, PurityViolationError, CharonError, CompileError } from './errors';
 import {
   Context,
   CompileOptions,
@@ -44,7 +44,7 @@ import {
   Scope,
   thread,
   dataPlace,
-  r
+  r, threadParallel
 } from './CompilerExtras';
 import { stdlib } from './CharonSTDDef';
 import { version } from '../package.json';
@@ -131,41 +131,18 @@ Please do not hesitate to provide additional steps for reproduction.
    * @param sourceName The name of the source, for error reporting.
    */
   compile(input: string | Buffer, sourceName: string) {
-    this.code = input.toString();
-    const ast = this.parser.parse(input);
-    const rt = this.options.embedRuntime
-      ? `local charon = (function()${('\n' + readFileSync('charon-runtime.lua').toString()).replace(/\n/g, '\n  ')}\nend)();`
-      : `local charon = require 'charon-runtime';`
-      ;
-    const header = `${rt}\nlocal ${this.PKG} = {};\n`;
     try {
+      this.code = input.toString();
+      const ast = this.parser.parse(input);
+      const rt = this.options.embedRuntime
+        ? `local charon = (function()${('\n' + readFileSync('charon-runtime.lua').toString()).replace(/\n/g, '\n  ')}\nend)();`
+        : `local charon = require 'charon-runtime';`
+        ;
+      const header = `${rt}\nlocal ${this.PKG} = {};\n`;
       const srcOut = header + this.genProgram(ast).replace(/;;/g, ';');
       return srcOut + `\nreturn ${this.PKG};\n`;
     } catch (err) {
-      if (err instanceof CharonError) {
-        const { line, column } = err.origin?.start ?? { line: null, column: null };
-        const [before, sub, after] = (() => {
-          if (err.origin == null) return ['', '<unknown>', ''];
-          const { start, end } = err.origin;
-          const s = Math.max(start.offset - 16, 0);
-          const e = Math.min(end.offset + 16, input.length);
-          const before = input.toString().slice(s, start.offset);
-          const after = input.toString().slice(end.offset, e);
-          return [
-            before.slice(Math.max(0, before.indexOf('\n') + 1), before.length),
-            input.toString().slice(start.offset, end.offset),
-            after.slice(0, Math.min(after.length, after.lastIndexOf('\n')))
-          ];
-        })();
-        throw new CharonError(`Could not compile source code.
-${sourceName}:${line}:${column}
-      ${before}${sub}${after}
-      ${r` ${before}`}${r`^${sub}`}
-${err}`, err.origin, err);
-      } else {
-        throw new CharonError(`Could not compile source code.
-Caused by ${err}`, null, err);
-      }
+      throw new CompileError(sourceName, input.toString(), err);
     }
   }
 
@@ -226,6 +203,10 @@ Caused by ${err}`, null, err);
     return this.options.varargClosureBlocks ? '...' : '';
   }
 
+  /**
+   * Processes a macro target.
+   * @param invoke
+   */
   private processMacro(invoke: ast.Invoke): string {
     if (!ast.isName(invoke.target))
       throw new BadMacroDefinition(`Attempting to expand macro with an invalid name! Symbols and access expressions are not allowed as macro names.`, invoke._location);
@@ -300,6 +281,10 @@ Caused by ${err}`, null, err);
         return this.genTerm(thread(args, Array.prototype.unshift));
       case '#thread-last':
         return this.genTerm(thread(args, Array.prototype.push));
+      case '#thread-parallel':
+        return this.genTerm(threadParallel(invoke, args, Array.prototype.unshift));
+      case '#thread-parallel-last':
+        return this.genTerm(threadParallel(invoke, args, Array.prototype.push));
       case '#not':
         if (args.length != 1) throw `not operator only accepts one argument.`;
         return `(not ${this.genTerm(args[0])})`;
