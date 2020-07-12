@@ -231,13 +231,6 @@ Caused by ${err}`, null, err);
       throw new BadMacroDefinition(`Attempting to expand macro with an invalid name! Symbols and access expressions are not allowed as macro names.`, invoke._location);
     const { target: name, args } = invoke;
     const ref = this.getCheckedReference(name);
-    const mapReduceArgs = (joiner: string) => {
-      return uniquePairs(args)
-        .map(
-          compose(
-            forAll(this.genTerm.bind(this)), joining(joiner)))
-            .join(' and ');
-    };
     switch (ref.name) {
       case '#def':
           return this.genDef(invoke, true);
@@ -303,49 +296,30 @@ Caused by ${err}`, null, err);
         const body = scope.termListLastReturns(args.slice(1));
         return `(function(${scope.genScopedRef(scopedErr)}) ${body} end)(_err)`;
       }
-      case '#eq':
-        return `(${mapReduceArgs('==')})`;
-      case '#neq':
-        return `(${mapReduceArgs('~=')})`;
-      case '#lt':
-        return `(${mapReduceArgs('<')})`;
-      case '#gt':
-        return `(${mapReduceArgs('>')})`;
-      case '#lteq':
-        return `(${mapReduceArgs('<=')})`;
-      case '#gteq':
-        return `(${mapReduceArgs('>=')})`;
       case '#thread-first':
         return this.genTerm(thread(args, Array.prototype.unshift));
       case '#thread-last':
         return this.genTerm(thread(args, Array.prototype.push));
-      case '#and':
-        return `(${args.map(this.genTerm.bind(this)).join(' and ')})`;
-      case '#or':
-        return `(${args.map(this.genTerm.bind(this)).join(' or ')})`;
-      case '#nand':
-        return `(not (${args.map(this.genTerm.bind(this)).join(' and ')}))`;
-      case '#nor':
-        return `(not (${args.map(this.genTerm.bind(this)).join(' or ')}))`;
-      case '#xor':
-        return this.genXOr(args);
       case '#not':
         if (args.length != 1) throw `not operator only accepts one argument.`;
         return `(not ${this.genTerm(args[0])})`;
+      case '#eq':
+      case '#neq':
+      case '#lt':
+      case '#gt':
+      case '#lteq':
+      case '#gteq':
+      case '#and':
+      case '#or':
+      case '#nand':
+      case '#nor':
+      case '#xor':
       case '#plus':
-        return `(${args.map(this.genTerm.bind(this)).join('+')})`;
       case '#minus':
-        return `(${args.map(this.genTerm.bind(this)).join('-')})`;
       case '#div':
-        return `(${args.map(this.genTerm.bind(this)).join('/')})`;
       case '#mul':
-        return `(${args.map(this.genTerm.bind(this)).join('*')})`;
       case '#pow':
-        if (this.target < 5.3) {
-          return args.map(this.genTerm.bind(this)).reduce((acc, curr) => `math.pow(${acc}, ${curr})`);
-        } else {
-          return `(${args.join('^')})`;
-        }
+        return this.genBOP(invoke, ref.name, args);
       case '#import': {
         const targetOrBinder = args[0];
         const from = args[1];
@@ -404,6 +378,76 @@ Caused by ${err}`, null, err);
     const macro = this.getMacro(ref?.name ?? '');
     if (macro == null) throw `Undefined macro ${name}`;
     return macro(ref?.name ?? '', args); 
+  }
+
+  /**
+   * Generates a binary-like operator such as +,-, or /...
+   * @param invoke
+   * @param modus
+   * @param args
+   */
+  private genBOP(invoke: ast.Invoke, modus: string, args: ast.Term[]): string {
+    if (args.length <= 1) {
+      throw new SyntaxError(`Operator ${
+        modus
+      } needs at least two arguments!`, invoke._location);
+    }
+    const mapReduceArgs = (joiner: string) => {
+      return uniquePairs(args)
+        .map(
+          compose(
+            forAll(this.genTerm.bind(this)), joining(joiner)))
+            .join(' and ');
+    };
+    const parsedArgs = args.map(this.genTerm.bind(this))
+    switch (modus) {
+      case '#eq':
+        return `(${mapReduceArgs('==')})`;
+      case '#neq':
+        return `(${mapReduceArgs('~=')})`;
+      case '#lt':
+        return `(${mapReduceArgs('<')})`;
+      case '#gt':
+        return `(${mapReduceArgs('>')})`;
+      case '#lteq':
+        return `(${mapReduceArgs('<=')})`;
+      case '#gteq':
+        return `(${mapReduceArgs('>=')})`;
+      case '#and':
+        return `(${parsedArgs.join(' and ')})`;
+      case '#or':
+        return `(${parsedArgs.join(' or ')})`;
+      case '#nand':
+        return `(not (${parsedArgs.join(' and ')}))`;
+      case '#nor':
+        return `(not (${parsedArgs.join(' or ')}))`;
+      case '#xor':
+        return this.genXOr(args);
+      case '#plus':
+        return `(${parsedArgs.join('+')})`;
+      case '#minus':
+        return `(${parsedArgs.join('-')})`;
+      case '#div':
+        return `(${parsedArgs.join('/')})`;
+      case '#mul':
+        return `(${parsedArgs.join('*')})`;
+      case '#pow':
+        if (this.target < 5.3) {
+          return parsedArgs.reduce((acc, curr) => `math.pow(${acc}, ${curr})`);
+        } else {
+          return `(${args.join('^')})`;
+        }
+      default:
+        throw new CharonError(`Unknown binary-like operator "${
+          modus
+        }" passed. This is likely a bug in the parser, please issue a bug ${
+          this.bug(
+            'unexpected binary-like operator',
+            'genBOP/switch',
+            invoke._location
+          )
+        }`, invoke._location);
+    }
   }
 
   /**
@@ -489,7 +533,7 @@ Caused by ${err}`, null, err);
       }
       const ref = this.getCheckedReference(target);
       if (this.pureContext && ref.kind === DataKind.IMPURE_FUNC) {
-        throw new PurityViolationError(`Impure functions cannot be invoked from a pure context!`);
+        throw new PurityViolationError(`Impure functions cannot be invoked from a pure context!`, invoke._location);
       }
       if (ref.kind === DataKind.MACRO_FUNC) {
         return this.processMacro(invoke);
