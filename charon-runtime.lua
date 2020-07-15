@@ -407,10 +407,13 @@ function charon.object_set(object, key, value)
 end
 
 function charon.call(fn, ...)
-  if fn == charon.Unit then
-    error('Unit is not callable!');
-  end
+  assert(fn ~= charon.Unit, 'Unit is not callable!');
   return fn(...);
+end
+
+function charon.apply(fn, args)
+  assert(fn ~= charon.Unit, 'Unit is not callable!');
+  return fn(table.unpack(args));
 end
 
 function charon.opaque_call(fn)

@@ -74,8 +74,24 @@ A list of objects, functions and operators.
  - `or?`
  - `>>=`
  - `atom`
+ - `apply` Calls the reference function (First argument) and passes the second
+ list argument as the list of arguments of the function.
+```clj
+; Example of apply:
+(def args [1 2 3])
+(def x (apply + args))
+; Same as doing
+(def x (+ 1 2 3))
+```
+ - `call` Calls the reference function (First argument) and passes the rest of
+ the passed arguments.
+```clj
+; Example of call
+(def x (call + 1 2))
+; Is the same as doing:
+(def x (+ 1 2))
+```
  - `opaque-call`
- - `call`
  - `println`
  - `print`
  - `file/open`
