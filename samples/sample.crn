@@ -24,7 +24,7 @@
 
 ; Example of import:
 (import lib :from "samples/lib")
-; Import can be destructured if using a binding vector.
+; Import can be destructured if using a binding list.
 (import [ sum ] :from "samples/lib")
 
 ; Compose functions (Not the same as thread-thru!)
@@ -121,12 +121,12 @@
 (def double [x]
   (* x 2))
 
-; Vectors
+; Lists
 (def-value doubles
-  (vector/map [1 2 3 4] double))
+  (list/map [1 2 3 4] double))
 
 (def-value triples
-  (vector/map [1 2 3 4]
+  (list/map [1 2 3 4]
     (fn [x]
       (* x 3))))
 

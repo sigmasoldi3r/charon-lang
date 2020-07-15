@@ -262,6 +262,16 @@ export const stdlib = {
       name: 'charon.some'
       , kind: DataKind.FUNC
     }),
+  'type':
+    _({
+      name: 'charon.type'
+      , kind: DataKind.FUNC
+    }),
+  'is?':
+    _({
+      name: 'charon.is'
+      , kind: DataKind.FUNC
+    }),
   'in?':
     _({
       name: 'charon.in_args'
@@ -297,59 +307,74 @@ export const stdlib = {
       name: 'charon.compose'
       , kind: DataKind.FUNC
     }),
-  'vector/map':
+  'list/map':
     _({
-      name: 'charon.vector_map'
+      name: 'charon.list_map'
       , kind: DataKind.FUNC
     }),
-  'vector/each':
+  'list/each':
     _({
-      name: 'charon.vector_each'
+      name: 'charon.list_each'
       , kind: DataKind.FUNC
     }),
-  'vector/get':
+  'list/get':
     _({
-      name: 'charon.vector_get'
+      name: 'charon.list_get'
       , kind: DataKind.FUNC
     }),
-  'vector/filter':
+  'list/filter':
     _({
-      name: 'charon.vector_filter'
+      name: 'charon.list_filter'
       , kind: DataKind.FUNC
     }),
-  'vector/merge':
+  'list/merge':
     _({
-      name: 'charon.vector_merge'
+      name: 'charon.list_merge'
       , kind: DataKind.FUNC
     }),
-  'vector/add':
+  'list/append':
     _({
-      name: 'charon.vector_add'
+      name: 'charon.list_append'
       , kind: DataKind.FUNC
     }),
-  'vector/drop':
+  'list/prepend':
     _({
-      name: 'charon.vector_drop'
+      name: 'charon.list_prepend'
       , kind: DataKind.FUNC
     }),
-  'vector/drop-left':
+  'list/drop':
     _({
-      name: 'charon.vector_drop_left'
+      name: 'charon.list_drop'
       , kind: DataKind.FUNC
     }),
-  'vector/len':
+  'list/drop-left':
     _({
-      name: 'charon.vector_len'
+      name: 'charon.list_drop_left'
       , kind: DataKind.FUNC
     }),
-  'vector/reduce':
+  'list/len':
     _({
-      name: 'charon.vector_reduce'
+      name: 'charon.list_len'
       , kind: DataKind.FUNC
     }),
-  'vector/reduce-indexed':
+  'list/has?':
     _({
-      name: 'charon.vector_reduce_indexed'
+      name: 'charon.list_has'
+      , kind: DataKind.FUNC
+    }),
+  'list/find':
+    _({
+      name: 'charon.list_find'
+      , kind: DataKind.FUNC
+    }),
+  'list/reduce':
+    _({
+      name: 'charon.list_reduce'
+      , kind: DataKind.FUNC
+    }),
+  'list/reduce-indexed':
+    _({
+      name: 'charon.list_reduce_indexed'
       , kind: DataKind.FUNC
     }),
   'table/get':

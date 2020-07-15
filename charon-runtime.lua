@@ -26,10 +26,12 @@ SOFTWARE.
 ]]
 local charon = {}
 
+local function strcat(this, other) return tostring(this) .. other; end
+
 -- Unit type
 charon.Unit = setmetatable({}, {
   __tostring = function() return 'Unit'; end,
-  __concat = function(this, other) return tostring(this) .. other; end,
+  __concat = strcat,
   __call = function() error 'Attempting to call unit value!'; end
 })
 charon.True = true
@@ -37,7 +39,7 @@ charon.False = false
 
 local Symbol = {
   __tostring = function(self) return ':' .. self.value; end,
-  __concat = function(this, other) return tostring(this) .. other; end
+  __concat = strcat
 };
 local symbols = {};
 
@@ -46,6 +48,37 @@ function charon.symbol(value)
   local symbol = setmetatable({ value = value }, Symbol);
   symbols[value] = symbol;
   return symbol;
+end
+
+function charon.type(value)
+  if value == charon.Unit then
+    return charon.symbol'unit';
+  end
+  local type = type(value);
+  if type == 'number' then
+    return charon.symbol'number';
+  elseif type == 'string' then
+    return charon.symbol'string';
+  elseif type == 'table' then
+    local meta = getmetatable(value);
+    if meta == List then
+      return charon.symbol'list';
+    elseif meta == Table then
+      return charon.symbol'table';
+    elseif meta == Symbol then
+      return charon.symbol'symbol';
+    elseif meta == Atom then
+      return charon.symbol'atom';
+    else
+      return charon.symbol'object';
+    end
+  else
+    return charon.symbol'nothing';
+  end
+end
+
+function charon.is(value, symbol)
+  return charon.type(value) == symbol;
 end
 
 function charon.some(value)
@@ -77,37 +110,65 @@ function charon.isnt_unit(value)
   return value ~= charon.Unit;
 end
 
-local atom = {}
+local Atom = {
+  __tostring = function(self)
+    return 'atom{' .. tostring(self.value) .. '}';
+  end,
+  __concat = strcat
+}
 
 function charon.atom(value)
   return setmetatable({ value = value }, Atom);
 end
 
-local Vector = {
+local List = {
   __tostring = function(self)
     local list = ''
     for i=1, (#self - 1) do
-      list = list .. tostring(self[i]) .. ', ';
+      list = list .. tostring(self[i]) .. ' ';
     end
-    return '[' .. list .. tostring(self[#self]) .. ']'
-  end
+    return '[ ' .. list .. tostring(self[#self]) .. ' ]'
+  end,
+  __concat = strcat
 }
 
-function charon.vector(tbl)
-  return setmetatable(tbl, Vector)
+function charon.list(tbl)
+  return setmetatable(tbl, List)
 end
 
-function charon.vector_get(tbl, key)
-  assert(getmetatable(tbl) == Vector, "vector/get only accepts vectors.");
-  assert(type(key) == 'number', "vector/get key can only be numeric.");
+local EQ = function(a, b) return a == b; end
+
+function charon.list_find(tbl, what, finder)
+  finder = finder or EQ;
+  for _, v in pairs(tbl) do
+    if finder(v, what) then
+      return v;
+    end
+  end
+  return charon.Unit;
+end
+
+function charon.list_has(tbl, element, finder)
+  finder = finder or EQ;
+  for _, v in pairs(tbl) do
+    if finder(v, element) then
+      return true;
+    end
+  end
+  return false;
+end
+
+function charon.list_get(tbl, key)
+  assert(getmetatable(tbl) == List, "list/get only accepts vectors.");
+  assert(type(key) == 'number', "list/get key can only be numeric.");
   local field = tbl[key];
   if field == nil then return charon.Unit; end
   return field;
 end
 
-function charon.vector_merge(left, right)
-  assert(getmetatable(left) == Vector, "vector/merge only accepts vectors.");
-  assert(getmetatable(right) == Vector, "vector/merge only accepts vectors.");
+function charon.list_merge(left, right)
+  assert(getmetatable(left) == List, "list/merge only accepts vectors.");
+  assert(getmetatable(right) == List, "list/merge only accepts vectors.");
   local vec = charon.vector{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
@@ -118,13 +179,13 @@ function charon.vector_merge(left, right)
   return tbl;
 end
 
-function charon.vector_len(left)
-  assert(getmetatable(left) == Vector, "vector/add only accepts vectors.");
+function charon.list_len(left)
+  assert(getmetatable(left) == List, "list/add only accepts vectors.");
   return #left;
 end
 
-function charon.vector_reduce_indexed(vec, fn, value)
-  assert(getmetatable(vec) == Vector, "vector/reduce-indexed only accepts vectors.");
+function charon.list_reduce_indexed(vec, fn, value)
+  assert(getmetatable(vec) == List, "list/reduce-indexed only accepts vectors.");
   local start = 1;
   if value == nil then
     start = 2;
@@ -136,8 +197,8 @@ function charon.vector_reduce_indexed(vec, fn, value)
   return value;
 end
 
-function charon.vector_reduce(vec, fn, value)
-  assert(getmetatable(vec) == Vector, "vector/reduce only accepts vectors.");
+function charon.list_reduce(vec, fn, value)
+  assert(getmetatable(vec) == List, "list/reduce only accepts vectors.");
   local start = 1;
   if value == nil then
     start = 2;
@@ -149,8 +210,8 @@ function charon.vector_reduce(vec, fn, value)
   return value;
 end
 
-function charon.vector_add(left, ...)
-  assert(getmetatable(left) == Vector, "vector/add only accepts vectors.");
+function charon.list_append(left, ...)
+  assert(getmetatable(left) == List, "list/append only accepts vectors.");
   local vec = charon.vector{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
@@ -161,9 +222,21 @@ function charon.vector_add(left, ...)
   return vec;
 end
 
-function charon.vector_drop(left, n)
-  assert(getmetatable(left) == Vector, "vector/drop only accepts vectors.");
-  assert(type(n) == 'number', "vector/drop second argument must be a number.");
+function charon.list_prepend(left, ...)
+  assert(getmetatable(left) == List, "list/prepend only accepts vectors.");
+  local vec = charon.vector{};
+  for _, v in pairs(left) do
+    vec[#vec + 1] = v;
+  end
+  for _, v in pairs{...} do
+    vec[#vec + 1] = v;
+  end
+  return vec;
+end
+
+function charon.list_drop(left, n)
+  assert(getmetatable(left) == List, "list/drop only accepts vectors.");
+  assert(type(n) == 'number', "list/drop second argument must be a number.");
   local vec = charon.vector{};
   local min = math.min(#left, n);
   for i=1, min do
@@ -172,9 +245,9 @@ function charon.vector_drop(left, n)
   return vec;
 end
 
-function charon.vector_drop_left(left, n)
-  assert(getmetatable(left) == Vector, "vector/drop-left only accepts vectors.");
-  assert(type(n) == 'number', "vector/drop-left second argument must be a number.");
+function charon.list_drop_left(left, n)
+  assert(getmetatable(left) == List, "list/drop-left only accepts vectors.");
+  assert(type(n) == 'number', "list/drop-left second argument must be a number.");
   local vec = charon.vector{};
   local min = math.min(#left, n);
   for i=min, #left do
@@ -183,8 +256,8 @@ function charon.vector_drop_left(left, n)
   return vec;
 end
 
-function charon.vector_map(tbl, mapper)
-  assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
+function charon.list_map(tbl, mapper)
+  assert(getmetatable(tbl) == List, "list/map only accepts vectors.");
   local vec = charon.vector{};
   for k, v in pairs(tbl) do
     vec[#vec + 1] = mapper(v, k);
@@ -192,8 +265,8 @@ function charon.vector_map(tbl, mapper)
   return vec;
 end
 
-function charon.vector_filter(tbl, filter)
-  assert(getmetatable(tbl) == Vector, "vector/map only accepts vectors.");
+function charon.list_filter(tbl, filter)
+  assert(getmetatable(tbl) == List, "list/map only accepts vectors.");
   local vec = charon.vector{};
   for k, v in pairs(tbl) do
     if filter(v, k) then
@@ -203,15 +276,24 @@ function charon.vector_filter(tbl, filter)
   return vec;
 end
 
-function charon.vector_each(tbl, consumer)
-  assert(getmetatable(tbl) == Vector, "vector/each only accepts vectors.");
+function charon.list_each(tbl, consumer)
+  assert(getmetatable(tbl) == List, "list/each only accepts vectors.");
   for k, v in pairs(tbl) do
     consumer(v, k);
   end
   return charon.Unit;
 end
 
-local Table = {}
+local Table = {
+  __tostring = function(self)
+    local paired = '';
+    for k, v in pairs(self) do
+      paired = paired .. tostring(k) .. ' ' .. tostring(v) .. ', ';
+    end
+    return '{ ' .. paired .. ' }';
+  end,
+  __concat = strcat
+}
 
 function charon.table(tbl)
   return setmetatable(tbl, Table)

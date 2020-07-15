@@ -104,10 +104,11 @@ Methods related:
  - `string/sub`
  - `string/upper`
 
-### vector
+### list
 
-A vector is a collection of incrementing integer keys, like lists or arrays in
-other languages.
+(Formerly known as vector)
+
+A list is a collection of contiguous, integer-indexed elements.
 
 ```clj
 ; Example of creation
@@ -116,16 +117,20 @@ other languages.
 
 Methods related:
 
- - `vector/map`
- - `vector/each`
- - `vector/get`
- - `vector/filter`
- - `vector/merge`
- - `vector/add`
- - `vector/drop`
- - `vector/drop-left`
- - `vector/len`
- - `vector/reduce`
+ - `list/map`
+ - `list/each`
+ - `list/get`
+ - `list/filter`
+ - `list/merge`
+ - `list/append`
+ - `list/prepend`
+ - `list/drop`
+ - `list/drop-left`
+ - `list/len`
+ - `list/reduce`
+ - `list/has?` Returns true if the element was found, false otherwise.
+ - `list/find` Returns the element if the test function returns true, unit
+ otherwise.
 
 ### table
 

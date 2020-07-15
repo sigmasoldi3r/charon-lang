@@ -54,7 +54,7 @@ unchecked is considered impure. This is also a pending work for Charon, to
 include purity checks for locals and referential calls.
 
 Also this means that object manipulation (either read or write) is always
-impure, and for that same reason you can't mutate tables or vectors.
+impure, and for that same reason you can't mutate tables or lists.
 
 Examples:
 ```clj
@@ -96,27 +96,27 @@ Note: All functions, methods and operators are being documented at
 [docs.md](docs.md), but still being written. This document is a simple
 introduction to the language and it's features.
 
-### Vector
+### List
 
-A vector is a collection of values. Vector is immutable, but you can join and
+A list is a collection of values. List is immutable, but you can join and
 append to create new ones.
 
-To create a new vector use the literal `[]`.
+To create a new list use the literal `[]`.
 
-- `vector/merge` merges two vectors into a new one.
-- `vector/add` appends elements to the vector.
-- `vector/get` returns the nth element or `unit`.
-- `vector/len` returns the length of the vector.
-- `vector/drop` returns a new vector dropping n elements from the right.
-- `vector/drop-left` returns a new vector dropping n elements from the left.
-- `vector/drop-left` returns a new vector dropping n elements from the left.
-- `vector/map` returns a new vector with the result of the mapping function for each element.
-- `vector/filter` returns a new vector filtered using the result of the filter function.
-- `vector/each` calls the function for each element, presumably for side effects. Returns `unit`.
+- `list/merge` merges two lists into a new one.
+- `list/append` appends elements to the list.
+- `list/prepend` prepends elements to the list.
+- `list/get` returns the nth element or `unit`.
+- `list/len` returns the length of the list.
+- `list/drop` returns a new list dropping n elements from the right.
+- `list/drop-left` returns a new list dropping n elements from the left.
+- `list/map` returns a new list with the result of the mapping function for each element.
+- `list/filter` returns a new list filtered using the result of the filter function.
+- `list/each` calls the function for each element, presumably for side effects. Returns `unit`.
 
 ```clj
 ; Example
-(def-value my-vector [1 2 3 4])
+(def-value my-list [1 2 3 4])
 ```
 
 ### Table
@@ -140,6 +140,9 @@ To create a new table use the literal `{}`.
 An object is anything that is not a primitive, or a standard collection. The
 underlying implementation is a any Lua table, and is the primary method for
 interacting with existing Lua codebase.
+
+Do not confuse a Lua table with a Charon table, they represent different logical
+collections.
 
 Example:
 ```lua
@@ -187,6 +190,35 @@ At the moment, there are three object interaction methods:
 - `object/new-raw` same as `object/new` but leaves keys as is.
 - `object/set` sets the field to a value, thus impure.
 - `object/get` gets the field, and as objects are mutable this is also impure.
+
+### Meta
+
+To get the type of value you can use the `type` function:
+
+```clj
+; Examples
+(assert
+  (= (type [1 2 3]) :list))
+
+(when (type val)
+  :list "Yey a list"
+  :table "Oh, the table."
+  # (throw (str "What is a " (type val) "?")))
+```
+
+Types returned are:
+```clj
+{
+  :number  ; For primitive numbers, integers or not.
+  :string  ; For primitive strings.
+  :boolean ; For primitive booleans (true/false)
+  :list    ; For Charon list collection.
+  :table   ; For Charon table collection.
+  :object  ; Any unknown object, from Lua context or by using (object/new ...)
+}
+```
+
+You can assert them or use in a when clause.
 
 ### Example
 
