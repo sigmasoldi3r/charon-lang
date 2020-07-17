@@ -288,9 +288,9 @@ local Table = {
   __tostring = function(self)
     local paired = '';
     for k, v in pairs(self) do
-      paired = paired .. tostring(k) .. ' ' .. tostring(v) .. ', ';
+      paired = paired .. tostring(k) .. ' ' .. tostring(v) .. ' ';
     end
-    return '{ ' .. paired .. ' }';
+    return '{ ' .. paired .. '}';
   end,
   __concat = strcat
 }
@@ -387,6 +387,8 @@ function charon.object_new(proto)
 end
 
 function charon.object_get(object, key)
+  assert(object ~= nil, "Cannot get '" .. tostring(key) .. "' from nothing!");
+  assert(object ~= charon.Unit, "Cannot get '" .. tostring(key) .. "' from unit!");
   local field = object[key];
   if field == nil then return charon.Unit; end
   return field;

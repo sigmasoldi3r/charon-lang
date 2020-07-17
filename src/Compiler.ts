@@ -220,7 +220,7 @@ Please do not hesitate to provide additional steps for reproduction.
       case '#let':
           return this.genLet(invoke);
       case '#three-dots':
-        return `charon.vector{...}`;
+        return `charon.list{...}`;
       case '#if': {
         const condition = this.genTerm(args[0]);
         const then = this.genTerm(args[1]);
@@ -698,7 +698,7 @@ Please do not hesitate to provide additional steps for reproduction.
   }
 
   private genVector(vector: ast.Vector): string {
-    return `charon.vector{ ${vector.list.map(this.genTerm.bind(this)).join()} }`
+    return `charon.list{ ${vector.list.map(this.genTerm.bind(this)).join()} }`
   }
 
   private genSymbol(symbol: ast.SYMBOL): string {
