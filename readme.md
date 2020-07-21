@@ -222,7 +222,26 @@ Types returned are:
 
 You can assert them or use in a when clause.
 
-### Example
+
+## Code Samples
+
+To see code in action you can visit [samples/](samples/) folder.
+
+#### Code samples
+
+Name|File|Related
+-|-|-
+General example|[sample.crn](samples/sample.crn)|
+Library example|[lib.crn](samples/lib.crn)|
+wxLua example|[wxWidgets-demo.crn](samples/wxWidgets-demo.crn)|[wxLua](http://wxlua.sourceforge.net)
+
+### Featured projects
+
+This contains some example projects.
+
+Name|Description|Related
+-|-|-
+[Pootis Explosion](https://github.com/sigmasoldi3r/charon-lang-gmod-addon-example)| A simple gmod addon to showcase the language|[Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/)
 
 Remember that functions are documented in [docs.md](docs.md) file.
 
@@ -258,9 +277,6 @@ considered **pure** despite that the produced function is impure.
 ```
 
 Among others (To be documented).
-
-See [samples/sample.crn](samples/sample.crn) for a full example of code, where
-all features are thrown into a single script.
 
 More notes: import does not read any symbol from the module (Nor does export
 the module any). This means that purity checks between library calls are faked

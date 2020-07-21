@@ -4,26 +4,6 @@ A list of objects, functions and operators.
 
 **WARNING**: Under construction!
 
-## Code Samples
-
-To see code in action you can visit [samples/](samples/) folder.
-
-#### Code samples
-
-Name|File|Related
--|-|-
-General example|[sample.crn](samples/sample.crn)|
-Library example|[lib.crn](samples/lib.crn)|
-wxLua example|[wxWidgets-demo.crn](samples/wxWidgets-demo.crn)|[wxLua](http://wxlua.sourceforge.net)
-
-### Featured projects
-
-This contains some example projects.
-
-Name|Description|Related
--|-|-
-[Pootis Explosion](https://github.com/sigmasoldi3r/charon-lang-gmod-addon-example)| A simple gmod addon to showcase the language|[Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/)
-
 ## Library functions
 
  - `def`
