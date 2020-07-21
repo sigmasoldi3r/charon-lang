@@ -602,16 +602,27 @@ Please do not hesitate to provide additional steps for reproduction.
     return root + refChain.join('');
   }
 
-  private readonly accessModeTable = {
-    ':': ':',
-    '::': '.',
-    '::?': '.',
-    ':?': ':'
-  } as const;
-
+  /**
+   * Generates the segment of an access expression.
+   * Access expressions have a root and segments, segments are always preceded
+   * by either the bound reference operator ':' or unbound reference operator
+   * '::'.
+   * Example: 'a::b:c' where 'a' is the root, and '::b' and ':c' the segments.
+   * Note that null-coalescing access expressions are not supported, but
+   * reserved for possible future development.
+   * @param segment
+   */
   private genAccessSegment(segment: ast.AccessSegment): string {
-    // const name = this.getCheckedReference(segment.name);
-    return this.accessModeTable[segment.mode] + segment.name.value;
+    const name = segment.name.value;
+    switch (segment.mode) {
+      case ':': return `:${name}`;
+      case '::': return `.${name}`;
+      case '::?':
+      case ':?':
+        throw new SyntaxError(`Null-coalescing access expressions are not supported, reserved for a future use. Remove the '?' symbol.`, segment._location);
+      default:
+        throw new CharonError(`Unexpected state reached, '${segment.mode}' should not be here. This is likely a bug in the parser.`, segment._location);
+    }
   }
 
   /**
@@ -641,7 +652,8 @@ Please do not hesitate to provide additional steps for reproduction.
   }
 
   /**
-   * Registers a new storage place (Variable/Function).
+   * Registers a new storage place (Variable/Function), if is global sends it to
+   * the topmost context, else will register it as a local in this scope.
    * @param token
    * @param kind
    * @param scope
@@ -655,6 +667,11 @@ Please do not hesitate to provide additional steps for reproduction.
     return data;
   }
 
+  /**
+   * Generates the source code of the reference depending if is a local variable
+   * or a package-level constant.
+   * @param data
+   */
   private genScopedRef(data: DataPlace): string {
     if (data.scope === Scope.GLOBAL) {
       return `${this.PKG}["${data.original}"]`;
@@ -673,6 +690,11 @@ Please do not hesitate to provide additional steps for reproduction.
     return args.join();
   }
 
+  /**
+   * Generates the function def code.
+   * @param invoke
+   * @param pure
+   */
   private genDef(invoke: ast.Invoke, pure: boolean): string {
     if (this.pureContext) throw 'Cannot define new functions inside a pure context!';
     if (invoke.args.length < 2) throw 'Too few args!';
@@ -706,12 +728,20 @@ Please do not hesitate to provide additional steps for reproduction.
     return out.join(';');
   }
 
+  /**
+   * Generates the function definition body.
+   * @param invoke
+   */
   private genDefBody(invoke: ast.Invoke): string {
     const list = invoke.args.slice(2);
     if (list.length === 0) return `return charon.Unit;`;
     return this.termListLastReturns(list);
   }
 
+  /**
+   * Generates the code of a table literal.
+   * @param table
+   */
   private genTable(table: ast.Table): string {
     const pairs: string[] = [];
     for (let i = 0; i < table.values.length; i += 2) {
