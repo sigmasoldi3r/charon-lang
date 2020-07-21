@@ -1,0 +1,77 @@
+;;;
+; MIT License
+;
+; Copyright (c) 2020 Pablo Blanco Celdrán
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;;;
+
+;;
+; Instructions:
+; You should download compiled binaries of the wxLua library, along with a
+; compatible Lua backend.
+; If not, build both from source, and run this script at the same directory of
+; the shared library (wx.dll, wx.so, wx.dylib...)
+; CREDITS: This sample was ported from Lua to Charon, by using the sample at
+; http://wxlua.sourceforge.net/
+;;
+(import "wx")
+(def-extern wx)
+
+(def-value frame
+  (wx::wxFrame wx::NULL wx::wxID_ANY "wxLua Charon Lang Demo"
+    wx::wxDefaultPosition (wx::wxSize 450 450) wx::wxDEFAULT_FRAME_STYLE))
+
+; create a simple file menu
+(def-value file-menu (wx::wxMenu))
+(file-menu:Append wx::wxID_EXIT "E&xit" "Quit the program")
+
+;create a simple help menu
+(def-value help-menu (wx::wxMenu))
+(help-menu:Append wx::wxID_ABOUT "&About" "Abouth this example")
+
+; create a menu bar and append the file and help menus
+(def-value menu-bar (wx::wxMenuBar))
+(menu-bar:Append file-menu "&File")
+(menu-bar:Append help-menu "&Help")
+
+; attach the menu bar into the frame
+(frame:SetMenuBar menu-bar)
+
+; create a simple status bar
+(frame:CreateStatusBar 1)
+(frame:SetStatusText "Welcome to wxLua.")
+
+; connect the selection event of the exit menu item to an
+; event handler that closes the window
+(frame:Connect wx::wxID_EXIT wx::wxEVT_COMMAND_MENU_SELECTED
+  (fn [event] (frame:Close true)))
+
+; connect the selection event of the about menu item
+(frame:Connect wx::wxID_ABOUT wx::wxEVT_COMMAND_MENU_SELECTED
+  (fn [event]
+    (wx::wxMessageBox "This is the \"About\" dialog of the Minimal Charon & wxLua sample."
+      "About Charon & wxLua"
+      (+ wx::wxOK wx::wxICON_INFORMATION)
+      frame)))
+
+; finally, show the frame window
+(frame:Show true)
+(let [app (wx::wxGetApp)]
+  (app:MainLoop))
