@@ -74,7 +74,7 @@ export class CompileError extends Error {
     return `${sourceName}:${line}:${column}
   ${before}${sub}${after}
   ${r` ${before}`}${r`^${sub}`}
-${cause}`;
+${cause.name}: ${cause.message}`;
   }
 }
 
@@ -88,6 +88,7 @@ export class CharonError extends Error {
     public readonly cause: Optional<Error> = null)
   {
     super(message);
+    this.name = 'CharonError';
   }
 }
 
@@ -95,19 +96,25 @@ export class CharonError extends Error {
  * This exception is thrown when unhandled edge cases occur. This means that
  * there is a bug in the compiler.
  */
-export class UnexpectedParseException extends CharonError {}
+export class UnexpectedParseException extends CharonError {
+  name = 'UnexpectedParseException';
+}
 
 /**
  * Syntax errors occur when parsing the Charon source code, and encounter an
  * unknown token.
  */
-export class SyntaxError extends CharonError {}
+export class SyntaxError extends CharonError {
+  name = 'SyntaxError';
+}
 
 /**
  * This error is thrown when the compiler is able to detect purity violations
  * in function definitions.
  */
-export class PurityViolationError extends CharonError {}
+export class PurityViolationError extends CharonError {
+  name = 'PurityViolationError';
+}
 
 /**
  * This error is thrown when attempting to reference something unknown.
@@ -120,6 +127,7 @@ export class ReferenceError extends CharonError {
     cause: Optional<Error> = null)
   {
     super(message, origin, cause);
+    this.name = 'ReferenceError';
   }
 }
 
@@ -129,4 +137,6 @@ export class ReferenceError extends CharonError {
  * This might happen if a macro is defined using access expressions for
  * instance, which points to a bug in the compiler.
  */
-export class BadMacroDefinition extends CharonError {}
+export class BadMacroDefinition extends CharonError {
+  name = 'BadMacroDefinition';
+}

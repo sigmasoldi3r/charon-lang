@@ -23,20 +23,12 @@ SOFTWARE.
 */
 // Abstract syntax tree definitions
 
-export function isName(term: Term): term is NAME {
-  return term.type === 'Token' && term.name === 'NAME';
-}
-
-export function isSymbol(term: Term): term is SYMBOL {
-  return term.type === 'Token' && term.name === 'SYMBOL';
-}
-
 export function isAccessExpression(term: Term): term is AccessExpression {
   return term.type === 'AccessExpression';
 }
 
-export function isVector(term: Term): term is Vector {
-  return term.type === 'Vector';
+export function isList(term: Term): term is List {
+  return term.type === 'List';
 }
 
 export function isTable(term: Term): term is Table {
@@ -49,6 +41,29 @@ export function isInvoke(term: Term): term is Invoke {
 
 export function isWildcard(term: Term): term is WILDCARD {
   return term.type === 'Token' && term.name === 'WILDCARD';
+}
+
+export function isLiteral(term: Term): term is Literal {
+  return term.type === 'Token' &&
+      (  term.name === 'NUMBER'
+      || term.name === 'STRING'
+      || term.name === 'SYMBOL');
+}
+
+export function isName(term: Term): term is NAME {
+  return term.type === 'Token' && term.name === 'NAME';
+}
+
+export function isSymbol(term: Term): term is SYMBOL {
+  return term.type === 'Token' && term.name === 'SYMBOL';
+}
+
+export function isNumber(term: Term): term is NUMBER {
+  return term.type === 'Token' && term.name === 'NUMBER';
+}
+
+export function isString(term: Term): term is STRING {
+  return term.type === 'Token' && term.name === 'STRING';
 }
 
 export type CodeLocation =
@@ -69,7 +84,7 @@ export type Program =
   }
 
 export type Term
-  = Vector
+  = List
   | Table
   | Invoke
   | Literal
@@ -99,16 +114,16 @@ export type AccessSegment =
     mode: '::?' | ':?' | '::' | ':';
   } & LocatedCode
 
-export type Vector =
+export type List =
   {
-    type: 'Vector';
-    list: Term[];
+    type: 'List';
+    values: Term[];
   } & LocatedCode
 
 export type Table =
   {
     type: 'Table';
-    list: Term[];
+    values: Term[];
   } & LocatedCode
 
 export type Literal

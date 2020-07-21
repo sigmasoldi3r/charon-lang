@@ -159,7 +159,7 @@ function charon.list_has(tbl, element, finder)
 end
 
 function charon.list_get(tbl, key)
-  assert(getmetatable(tbl) == List, "list/get only accepts vectors.");
+  assert(getmetatable(tbl) == List, "list/get only accepts lists.");
   assert(type(key) == 'number', "list/get key can only be numeric.");
   local field = tbl[key];
   if field == nil then return charon.Unit; end
@@ -167,9 +167,9 @@ function charon.list_get(tbl, key)
 end
 
 function charon.list_merge(left, right)
-  assert(getmetatable(left) == List, "list/merge only accepts vectors.");
-  assert(getmetatable(right) == List, "list/merge only accepts vectors.");
-  local vec = charon.vector{};
+  assert(getmetatable(left) == List, "list/merge only accepts lists.");
+  assert(getmetatable(right) == List, "list/merge only accepts lists.");
+  local vec = charon.list{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
   end
@@ -180,12 +180,12 @@ function charon.list_merge(left, right)
 end
 
 function charon.list_len(left)
-  assert(getmetatable(left) == List, "list/add only accepts vectors.");
+  assert(getmetatable(left) == List, "list/add only accepts lists.");
   return #left;
 end
 
 function charon.list_reduce_indexed(vec, fn, value)
-  assert(getmetatable(vec) == List, "list/reduce-indexed only accepts vectors.");
+  assert(getmetatable(vec) == List, "list/reduce-indexed only accepts lists.");
   local start = 1;
   if value == nil then
     start = 2;
@@ -198,7 +198,7 @@ function charon.list_reduce_indexed(vec, fn, value)
 end
 
 function charon.list_reduce(vec, fn, value)
-  assert(getmetatable(vec) == List, "list/reduce only accepts vectors.");
+  assert(getmetatable(vec) == List, "list/reduce only accepts lists.");
   local start = 1;
   if value == nil then
     start = 2;
@@ -211,8 +211,8 @@ function charon.list_reduce(vec, fn, value)
 end
 
 function charon.list_append(left, ...)
-  assert(getmetatable(left) == List, "list/append only accepts vectors.");
-  local vec = charon.vector{};
+  assert(getmetatable(left) == List, "list/append only accepts lists.");
+  local vec = charon.list{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
   end
@@ -223,8 +223,8 @@ function charon.list_append(left, ...)
 end
 
 function charon.list_prepend(left, ...)
-  assert(getmetatable(left) == List, "list/prepend only accepts vectors.");
-  local vec = charon.vector{};
+  assert(getmetatable(left) == List, "list/prepend only accepts lists.");
+  local vec = charon.list{};
   for _, v in pairs(left) do
     vec[#vec + 1] = v;
   end
@@ -235,9 +235,9 @@ function charon.list_prepend(left, ...)
 end
 
 function charon.list_drop(left, n)
-  assert(getmetatable(left) == List, "list/drop only accepts vectors.");
+  assert(getmetatable(left) == List, "list/drop only accepts lists.");
   assert(type(n) == 'number', "list/drop second argument must be a number.");
-  local vec = charon.vector{};
+  local vec = charon.list{};
   local min = math.min(#left, n);
   for i=1, min do
     vec[i] = left[i];
@@ -246,9 +246,9 @@ function charon.list_drop(left, n)
 end
 
 function charon.list_drop_left(left, n)
-  assert(getmetatable(left) == List, "list/drop-left only accepts vectors.");
+  assert(getmetatable(left) == List, "list/drop-left only accepts lists.");
   assert(type(n) == 'number', "list/drop-left second argument must be a number.");
-  local vec = charon.vector{};
+  local vec = charon.list{};
   local min = math.min(#left, n);
   for i=min, #left do
     vec[i] = left[i];
@@ -257,8 +257,8 @@ function charon.list_drop_left(left, n)
 end
 
 function charon.list_map(tbl, mapper)
-  assert(getmetatable(tbl) == List, "list/map only accepts vectors.");
-  local vec = charon.vector{};
+  assert(getmetatable(tbl) == List, "list/map only accepts lists.");
+  local vec = charon.list{};
   for k, v in pairs(tbl) do
     vec[#vec + 1] = mapper(v, k);
   end
@@ -266,8 +266,8 @@ function charon.list_map(tbl, mapper)
 end
 
 function charon.list_filter(tbl, filter)
-  assert(getmetatable(tbl) == List, "list/map only accepts vectors.");
-  local vec = charon.vector{};
+  assert(getmetatable(tbl) == List, "list/map only accepts lists.");
+  local vec = charon.list{};
   for k, v in pairs(tbl) do
     if filter(v, k) then
       vec[#vec + 1] = v;
@@ -277,7 +277,7 @@ function charon.list_filter(tbl, filter)
 end
 
 function charon.list_each(tbl, consumer)
-  assert(getmetatable(tbl) == List, "list/each only accepts vectors.");
+  assert(getmetatable(tbl) == List, "list/each only accepts lists.");
   for k, v in pairs(tbl) do
     consumer(v, k);
   end
@@ -471,7 +471,7 @@ function charon.range(from, to, inc)
   assert(inc == nil or type(inc) == 'number'
     , 'Range\'s third argument can only be a number or not provided. Saw ' .. tostring(inc) .. ' instead.')
   if inc == nil then inc = 1; end
-  local p = {};
+  local p = charon.list{};
   local j = 1;
   if from > to then
     for i=from, to, -inc do

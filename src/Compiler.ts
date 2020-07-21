@@ -125,6 +125,14 @@ Please do not hesitate to provide additional steps for reproduction.
   private readonly PKG = '__local_package';
   private code = '';
 
+  private genEmbedRuntime() {
+    const rt = readFileSync('charon-runtime.lua')
+      .toString()
+      .replace(/(local charon.+?\n)/, '-- $1')
+      .replace(/(return charon;)/, '-- $1');
+    return (`\n${rt}`).replace(/\n/g, '\n  ');
+  }
+
   /**
    * Compiles the source code to target language.
    * @param input The source code to be compiled.
@@ -135,7 +143,7 @@ Please do not hesitate to provide additional steps for reproduction.
       this.code = input.toString();
       const ast = this.parser.parse(input);
       const rt = this.options.embedRuntime
-        ? `local charon = (function()${('\n' + readFileSync('charon-runtime.lua').toString()).replace(/\n/g, '\n  ')}\nend)();`
+        ? `local charon = {};\ndo${this.genEmbedRuntime()}\nend`
         : `local charon = require 'charon-runtime';`
         ;
       const header = `${rt}\nlocal ${this.PKG} = {};\n`;
@@ -150,12 +158,14 @@ Please do not hesitate to provide additional steps for reproduction.
     return program.program.map(this.genInvoke.bind(this)).join(';\n');
   }
 
-  private genLetLocalBind(args: ast.Vector): String {
+  private genLetLocalBind(args: ast.List): String {
     const bind = []
-    for (let i = 0; i < args.list.length; i += 2) {
-      const name = args.list[i];
-      if (!ast.isName(name)) throw `Let binding pairs must start with names!`;
-      const val = args.list[i + 1];
+    for (let i = 0; i < args.values.length; i += 2) {
+      const name = args.values[i];
+      if (!ast.isName(name)) {
+        throw new SyntaxError(`Let binding pairs must start with names!`, name._location);
+      }
+      const val = args.values[i + 1];
       const bound = this.registerVar(name, DataKind.LOCAL);
       bind.push(`local ${bound.name} = ${this.genTerm(val)}`);
     }
@@ -164,7 +174,7 @@ Please do not hesitate to provide additional steps for reproduction.
 
   private genLet(invoke: ast.Invoke): string {
     const first = invoke.args[0]
-    if (!ast.isVector(first)) throw 'First should be a binding array!';
+    if (!ast.isList(first)) throw 'First should be a binding array!';
     const $ = new Compiler(this, this.pureContext, this.options);
     const bind = $.genLetLocalBind(first);
     return `(function(${$.closure}) ${bind}; ${
@@ -208,8 +218,9 @@ Please do not hesitate to provide additional steps for reproduction.
    * @param invoke
    */
   private processMacro(invoke: ast.Invoke): string {
-    if (!ast.isName(invoke.target))
+    if (!ast.isName(invoke.target)) {
       throw new BadMacroDefinition(`Attempting to expand macro with an invalid name! Symbols and access expressions are not allowed as macro names.`, invoke._location);
+    }
     const { target: name, args } = invoke;
     const ref = this.getCheckedReference(name);
     switch (ref.name) {
@@ -253,10 +264,10 @@ Please do not hesitate to provide additional steps for reproduction.
       case '#for': {
         return new Compiler(this, this.pureContext, this.options).genFor(invoke);
       }
-      case '#fn':{
+      case '#fn': {
         const arg0 = args[0];
-        if (!ast.isVector(arg0))
-          throw new SyntaxError(`Function expression's first argument must be a binding vector!`);
+        if (!ast.isList(arg0))
+          throw new SyntaxError(`Function expression's first argument must be a binding vector!`, invoke._location);
         const argInput = this.genBindingVector(arg0);
         return `(function() local __self_ref__; __self_ref__ = (function(${argInput}) ${this.termListLastReturns(args.slice(1))} end); return __self_ref__; end)()`;
       }
@@ -267,9 +278,9 @@ Please do not hesitate to provide additional steps for reproduction.
       }
       case '#catch': {
         const binding = args[0];
-        if (!ast.isVector(binding))
+        if (!ast.isList(binding))
           throw new SyntaxError(`Catch first argument must be a binding vector with one argument!`);
-        const err = binding.list[0];
+        const err = binding.values[0];
         if (!ast.isName(err))
           throw new SyntaxError(`Catch's first binding element must be a name!`);
         const scope = new Compiler(this, undefined, this.options);
@@ -286,7 +297,9 @@ Please do not hesitate to provide additional steps for reproduction.
       case '#thread-parallel-last':
         return this.genTerm(threadParallel(invoke, args, Array.prototype.push));
       case '#not':
-        if (args.length != 1) throw `not operator only accepts one argument.`;
+        if (args.length != 1) {
+          throw new SyntaxError(`not operator only accepts one argument.`, invoke._location);
+        }
         return `(not ${this.genTerm(args[0])})`;
       case '#eq':
       case '#neq':
@@ -305,38 +318,16 @@ Please do not hesitate to provide additional steps for reproduction.
       case '#mul':
       case '#pow':
         return this.genBOP(invoke, ref.name, args);
-      case '#import': {
-        const targetOrBinder = args[0];
-        const from = args[1];
-        if (!ast.isSymbol(from))
-          throw new SyntaxError(`Import's second argument must be a symbol!`, from._location);
-        if (from.value !== 'from')
-          throw new SyntaxError(`Import's second argument is a symbol: expected ':from' but found ':${from.value}'`, from._location);
-        const toImport = args[2];
-        if (ast.isName(targetOrBinder)) {
-          const local = this.registerVar(targetOrBinder, DataKind.LOCAL);
-          return `local ${local.name} = require(${this.genTerm(toImport)});`;
-        } else if (ast.isVector(targetOrBinder)) {
-          const src = this.genTerm(toImport);
-          const names = targetOrBinder.list.map(t => {
-            if (!ast.isName(t)) throw new SyntaxError(`Import binding vector expects names only.`, t._location);
-            return t;
-          });
-          for (const term of names) {
-            this.registerVar(term, DataKind.LOCAL, Scope.LOCAL);
-          }
-          const str = names.map(this.genTerm.bind(this));
-          const bindDeclare = str.map(s => `local ${s};\n`).join('');
-          const bind = names.map(s => `${this.genTerm(s)} = __package["${s.value}"];`);
-          return `${bindDeclare}do local __package = require(${src}); ${bind} end`
-        } else {
-          throw new SyntaxError(`Unexpected ${targetOrBinder.type} found as first import argument. Expecting name or binding vector.`, targetOrBinder._location);
-        }
-      }
+      case '#import':
+        return this.genImport(args);
       case '#def-value': {
-        if (this.pureContext) throw `Value definition cannot be done from pure context.`;
+        if (this.pureContext) {
+          throw new PurityViolationError(`Value definition cannot be done from pure context.`, invoke._location);
+        }
         const name = args[0];
-        if (!ast.isName(name)) throw `def-value must start with a name!`;
+        if (!ast.isName(name)) {
+          throw new SyntaxError(`def-value must start with a name!`, invoke._location);
+        }
         const val = args[1];
         const local = this.registerVar(name, DataKind.LOCAL, Scope.GLOBAL);
         return `${this.genScopedRef(local)} = ${this.genTerm(val)};`;
@@ -361,8 +352,42 @@ Please do not hesitate to provide additional steps for reproduction.
       }
     }
     const macro = this.getMacro(ref?.name ?? '');
-    if (macro == null) throw `Undefined macro ${name}`;
+    if (macro == null) {
+      throw new ReferenceError(name.value, `Undefined macro ${name}`, invoke._location);
+    }
     return macro(ref?.name ?? '', args); 
+  }
+
+  private genImport(args: ast.Term[]): string {
+    const targetOrBinder = args[0];
+    if (ast.isString(targetOrBinder) || (ast.isName(targetOrBinder) && args.length === 1)) {
+      return `require(${this.genTerm(targetOrBinder)});`
+    }
+    const from = args[1];
+    if (!ast.isSymbol(from))
+      throw new SyntaxError(`Import's second argument must be a symbol!`, from._location);
+    if (from.value !== 'from')
+      throw new SyntaxError(`Import's second argument is a symbol: expected ':from' but found ':${from.value}'`, from._location);
+    const toImport = args[2];
+    if (ast.isName(targetOrBinder)) {
+      const local = this.registerVar(targetOrBinder, DataKind.LOCAL);
+      return `local ${local.name} = require(${this.genTerm(toImport)});`;
+    } else if (ast.isList(targetOrBinder)) {
+      const src = this.genTerm(toImport);
+      const names = targetOrBinder.values.map(t => {
+        if (!ast.isName(t)) throw new SyntaxError(`Import binding vector expects names only.`, t._location);
+        return t;
+      });
+      for (const term of names) {
+        this.registerVar(term, DataKind.LOCAL, Scope.LOCAL);
+      }
+      const str = names.map(this.genTerm.bind(this));
+      const bindDeclare = str.map(s => `local ${s};\n`).join('');
+      const bind = names.map(s => `${this.genTerm(s)} = __package["${s.value}"];`);
+      return `${bindDeclare}do local __package = require(${src}); ${bind} end`
+    } else {
+      throw new SyntaxError(`Unexpected ${targetOrBinder.type} found as first import argument. Expecting name or binding vector.`, targetOrBinder._location);
+    }
   }
 
   /**
@@ -442,26 +467,26 @@ Please do not hesitate to provide additional steps for reproduction.
   private genFor(invoke: ast.Invoke): string {
     const { args } = invoke;
     const args0 = args[0];
-    if (!ast.isVector(args0)) {
+    if (!ast.isList(args0)) {
       throw new SyntaxError(`For loop first argument must be a binding vector!`, args0._location);
     }
-    if (args0.list.length < 2 || args0.list.length > 3) {
+    if (args0.values.length < 2 || args0.values.length > 3) {
       throw new SyntaxError(`For loop binding vector must have either two or three arguments.`, args0._location);
     }
-    const cardinal: 2 | 3 = args0.list.length as any;
-    const v = args0.list[0];
+    const cardinal: 2 | 3 = args0.values.length as any;
+    const v = args0.values[0];
     if (!ast.isName(v)) {
       throw new SyntaxError(`For loop binding vector's first argument must be a name!`, v._location);
     }
     this.registerVar(v, DataKind.LOCAL, Scope.LOCAL);
-    const k = args0.list[1];
+    const k = args0.values[1];
     if (cardinal === 3 && !ast.isName(k)) {
       throw new SyntaxError(`If looping in pairs the second argument (the key) must be also a name!`, v._location);
     }
     if (cardinal === 3 && ast.isName(k)) {
       this.registerVar(k, DataKind.LOCAL, Scope.LOCAL);
     }
-    const iterable = cardinal === 3 ? args0.list[2] : k;
+    const iterable = cardinal === 3 ? args0.values[2] : k;
     let body: Optional<string> = null;
     const terms = args.slice(1).map(this.genTerm.bind(this)).join(';');
     if (cardinal === 3) {
@@ -638,9 +663,9 @@ Please do not hesitate to provide additional steps for reproduction.
     }
   }
 
-  private genBindingVector(bind: ast.Vector): string {
+  private genBindingVector(bind: ast.List): string {
     const args = [];
-    for (const arg of bind.list) {
+    for (const arg of bind.values) {
       if (!ast.isName(arg)) throw 'Binding vector should contain only names!';
       const local = this.registerVar(arg, DataKind.LOCAL);
       args.push(this.genScopedRef(local));
@@ -654,7 +679,7 @@ Please do not hesitate to provide additional steps for reproduction.
     const name = invoke.args[0];
     if (!ast.isName(name)) throw 'First arg should be a name!';
     const bind = invoke.args[1];
-    if (!ast.isVector(bind)) throw 'Missing binding vector!';
+    if (!ast.isList(bind)) throw 'Missing binding vector!';
     const local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.GLOBAL);
     const $ = new Compiler(this, pure, this.options);
     const args = $.genBindingVector(bind);
@@ -678,7 +703,7 @@ Please do not hesitate to provide additional steps for reproduction.
         out.push(this.genTerm(item));
       }
     }
-    return out.join(';')
+    return out.join(';');
   }
 
   private genDefBody(invoke: ast.Invoke): string {
@@ -689,16 +714,16 @@ Please do not hesitate to provide additional steps for reproduction.
 
   private genTable(table: ast.Table): string {
     const pairs: string[] = [];
-    for (let i = 0; i < table.list.length; i += 2) {
-      const l = this.genTerm(table.list[i]);
-      const r = this.genTerm(table.list[i + 1] ?? { type: 'Token', name: 'NAME', value: 'unit' });
+    for (let i = 0; i < table.values.length; i += 2) {
+      const l = this.genTerm(table.values[i]);
+      const r = this.genTerm(table.values[i + 1] ?? { type: 'Token', name: 'NAME', value: 'unit' });
       pairs.push(`[${l}] = ${r}`);
     }
     return `charon.table{ ${pairs.join()} }`;
   }
 
-  private genVector(vector: ast.Vector): string {
-    return `charon.list{ ${vector.list.map(this.genTerm.bind(this)).join()} }`
+  private genList(list: ast.List): string {
+    return `charon.list{ ${list.values.map(this.genTerm.bind(this)).join()} }`
   }
 
   private genSymbol(symbol: ast.SYMBOL): string {
@@ -716,10 +741,16 @@ Please do not hesitate to provide additional steps for reproduction.
 
   private genTerm(term: ast.Term): string {
     switch (term.type) {
-      case 'Vector': return this.genVector(term);
+      case 'List': return this.genList(term);
       case 'Table': return this.genTable(term);
       case 'Invoke': return this.genInvoke(term);
-      case 'AccessExpression': return this.genAccessExpression(term);
+      case 'AccessExpression': {
+        const found = term.segments.find(segment => segment.mode === ':' || segment.mode === ':?');
+        if (found != null) {
+          throw new SyntaxError(`Except for function calls, all property access must be unbounded (using the :: operator), expecting "${term.root.value}::${term.segments.map(s => s.name.value).join('::')}" but saw "${term.root.value}${term.segments.map(s => `${s.mode}${s.name.value}`)}"`, term._location);
+        }
+        return this.genAccessExpression(term);
+      }
       case 'Token':
         switch (term.name) {
           case 'WILDCARD': throw new SyntaxError(`Unexpected wildcard symbol.`, term._location);

@@ -29,7 +29,7 @@ import * as yargs from 'yargs';
 import { EntryPoint } from './exec';
 import { version } from '../package.json';
 import { writeFileSync, readFileSync } from 'fs';
-import { CharonError } from './errors';
+import { CharonError, CompileError } from './errors';
 
 /**
  * Entry point class.
@@ -101,7 +101,14 @@ export default class Main {
         mode: args.type as any
       });
     } catch (err) {
-      console.error(err);
+      if (err instanceof CompileError) {
+        console.error(err.message);
+        if (err.cause instanceof CharonError && err.cause.cause != null) {
+          console.error(err.cause.cause.message);
+        }
+      } else {
+        console.error(err);
+      }
       return 2;
     }
     return 0;

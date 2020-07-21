@@ -3,16 +3,17 @@
  */
 
 Program
-  = _ program:(r:Invoke _ { return r })*
+  = _ program:(r:Invoke _ { return r })* (';' [^\r\n]*)?
   {
     return { type: 'Program', program }
   }
 
 Term
-  = Vector
+  = List
   / Table
   / Invoke
   / Literal
+  / AccessExpression
   / NAME
   / WILDCARD
 
@@ -52,23 +53,23 @@ AccessSegment
     }
   }
 
-Vector
-  = LSQUARE_BRACE _ list:(e:Term _ { return e })* RSQUARE_BRACE
+List
+  = LSQUARE_BRACE _ values:(e:Term _ { return e })* RSQUARE_BRACE
   {
     return {
       _location: location(),
-      type: 'Vector',
-      list
+      type: 'List',
+      values
     }
   }
 
 Table
-  = LBRACE _ list:(e:Term _ { return e })* RBRACE
+  = LBRACE _ values:(e:Term _ { return e })* RBRACE
   {
     return {
       _location: location(),
       type: 'Table',
-      list
+      values
     }
   }
 
@@ -95,7 +96,7 @@ NUMBER
   { return { _location: location(), type: 'Token', value, name: 'NUMBER' } }
 
 STRING
-  = value:$('"' [^"]* '"')
+  = value:$('"' ('\\"' / [^"])* '"')
   { return { _location: location(), type: 'Token', value, name: 'STRING' } }
 
 SYMBOL

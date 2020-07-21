@@ -87,6 +87,8 @@ of "assigning" a variable as other languages do.
 
 ## Standard library
 
+Module system is described in [docs/Module System](docs.md#module-system).
+
 Charon standard library is small, it relies on Lua standard library for most
 things.
 

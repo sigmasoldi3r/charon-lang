@@ -200,7 +200,7 @@ export function thread(args: ast.Term[], applier: Applier): ast.Term {
   return receiver;
 }
 
-export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Applier): ast.Vector {
+export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Applier): ast.List {
   const args0 = args[0];
   const list = args.slice(1).map(term => {
     if (!ast.isInvoke(term)) {
@@ -213,9 +213,9 @@ export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Ap
     return term;
   });
   return {
-    type: 'Vector',
+    type: 'List',
     _location: invoke._location,
-    list
+    values: list
   };
 }
 

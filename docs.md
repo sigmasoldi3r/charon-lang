@@ -99,6 +99,47 @@ A list of objects, functions and operators.
  - `file/write`
  - `file/read`
 
+## Module system
+
+Charon lang modules are exported tables. To maximize the interop between pure
+Lua modules and Charon modules, Charon exports a table with all public objects,
+either functions or variables, with their names untouched.
+
+The same goes when importing, the `import` macro will bind to a private local
+variable the imported module. The macro also has the option to deconstruct the
+object and assign it's fields.
+
+```clj
+; Imports the whole table
+(import module :from "module")
+(println! (+ (object/get module "a") module::b module::c))
+
+; Or just the needed fields
+(import [a b c] :from "module")
+(println! (+ a b c))
+```
+
+At the moment there is no metadata field exported from modules, but it will
+have in a future.
+
+Modules will tell if the exported object has a known type, if it is callable or
+not and the purity in case of callable objects, even attached metadata and
+docstring.
+
+```clj
+(def a-func [a b]
+  "It sums"
+  (+ a b))
+;; Other module
+(import [a-func] :from "a-module")
+(def-value :no-export a-func-meta (object/get-meta a-func))
+(println! "a-func:" a-func-meta::docstring)
+(println! "a-func purity:" a-func-meta::pure?)
+```
+
+That's a practical example of how to make a runtime read of the module's
+metadata, **not implemented yet!**.
+
 ## Library objects and collections
 
 ### string
