@@ -1,4 +1,4 @@
-<img alt="Charon Logo" src="app.png" style="margin-left: 50%; transform: TranslateX(-50%);">
+![Charon Logo](app.png)
 
 <p align="center">
   <a aria-label="License badge" href="LICENSE">
