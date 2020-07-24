@@ -307,6 +307,7 @@ export const stdlib = {
       name: 'charon.compose'
       , kind: DataKind.FUNC
     }),
+  // List
   'list/map':
     _({
       name: 'charon.list_map'
@@ -377,6 +378,7 @@ export const stdlib = {
       name: 'charon.list_reduce_indexed'
       , kind: DataKind.FUNC
     }),
+  // Table
   'table/get':
     _({
       name: 'charon.table_get'

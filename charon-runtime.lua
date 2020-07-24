@@ -129,6 +129,17 @@ local List = {
     end
     return '[ ' .. list .. tostring(self[#self]) .. ' ]'
   end,
+  __eq = function(self, b)
+    if type(b) == 'table' and getmetatable(b) == List then
+      for k, v in pairs(b) do
+        if self[k] ~= v then
+          return false;
+        end
+      end
+      return true;
+    end
+    return self == b;
+  end,
   __concat = strcat
 }
 
