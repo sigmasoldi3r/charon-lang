@@ -1,9 +1,18 @@
-![charon logo](app.png)
+<img alt="Charon Logo" src="app.png" style="margin-left: 50%; transform: TranslateX(-50%);">
+
+<p align="center">
+  <a aria-label="License badge" href="LICENSE">
+    <img alt="License badge" src="https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square">
+  </a>
+  <a aria-label="Issues Badge" href="LICENSE">
+    <img alt="Issues Badge" src="https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square">
+  </a>
+  <a aria-label="Release Badge" href="LICENSE">
+    <img alt="Release Badge" src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square">
+  </a>
+</p>
 
 # Charon Programming Language
-[![license badge](https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square)](LICENSE)
-[![issues-badge](https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/issues)
-[![release-badges](https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/releases)
 
 Charon is a simple dynamic typed, functional programming language.
 
