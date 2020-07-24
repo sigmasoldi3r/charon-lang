@@ -31,6 +31,39 @@ import { r } from './CompilerExtras';
 export type LocatableError = Error & { location?: ast.CodeLocation };
 
 /**
+ * Returns a string with the slice of code that the given location represents.
+ * @param code
+ * @param location
+ */
+export function formatCodeSlice(code: String | Buffer, location: ast.CodeLocation, indent: number = 0) {
+  const [before, sub, after] = (() => {
+    const { start, end } = location;
+    const s = Math.max(start.offset - 16, 0);
+    const e = Math.min(end.offset + 16, code.length);
+    const before = code.toString().slice(s, start.offset);
+    const after = code.toString().slice(end.offset, e);
+    return [
+      before.slice(Math.max(0, before.indexOf('\n') + 1), before.length),
+      code.toString().slice(start.offset, end.offset),
+      after.slice(0, Math.min(after.length, after.lastIndexOf('\n')))
+    ];
+  })();
+  return `${' '.repeat(indent)}${before}${sub}${after}
+${' '.repeat(indent)}${r` ${before}`}${r`^${sub}`}`;
+}
+
+/**
+ * Takes an optional source location and a source name and outputs it's name
+ * with line and column.
+ * @param sourceName
+ * @param location
+ */
+export function formatSourceLocation(sourceName: string, location: Optional<ast.CodeLocation>) {
+  const { line, column } = location?.start ?? { line: null, column: null };
+  return `${sourceName}:${line}:${column}`;
+}
+
+/**
  * This error is a wrapper for compilation failures due to thrown exceptions.
  */
 export class CompileError extends Error {
@@ -57,23 +90,8 @@ export class CompileError extends Error {
       }
       return null;
     })();
-    const { line, column } = location?.start ?? { line: null, column: null };
-    const [before, sub, after] = (() => {
-      if (location == null) return '<unknown>';
-      const { start, end } = location;
-      const s = Math.max(start.offset - 16, 0);
-      const e = Math.min(end.offset + 16, input.length);
-      const before = input.toString().slice(s, start.offset);
-      const after = input.toString().slice(end.offset, e);
-      return [
-        before.slice(Math.max(0, before.indexOf('\n') + 1), before.length),
-        input.toString().slice(start.offset, end.offset),
-        after.slice(0, Math.min(after.length, after.lastIndexOf('\n')))
-      ];
-    })();
-    return `${sourceName}:${line}:${column}
-  ${before}${sub}${after}
-  ${r` ${before}`}${r`^${sub}`}
+    return `${formatSourceLocation(sourceName, location)}
+${location == null ? '<could not locate source>' : formatCodeSlice(input, location, 2)}
 ${cause.name}: ${cause.message}`;
   }
 }
@@ -85,8 +103,7 @@ export class CharonError extends Error {
   constructor(
     message?: string,
     public readonly origin: Optional<ast.CodeLocation> = null,
-    public readonly cause: Optional<Error> = null)
-  {
+    public readonly cause: Optional<Error> = null) {
     super(message);
     this.name = 'CharonError';
   }
@@ -109,6 +126,14 @@ export class SyntaxError extends CharonError {
 }
 
 /**
+ * Type errors occur when well-known types are checked at compile time, or when
+ * a declaration violation occurs (Such as redeclarating the same term twice).
+ */
+export class TypeError extends CharonError {
+  name = 'TypeError';
+}
+
+/**
  * This error is thrown when the compiler is able to detect purity violations
  * in function definitions.
  */
@@ -124,8 +149,7 @@ export class ReferenceError extends CharonError {
     public reference: string,
     message?: string,
     origin: Optional<ast.CodeLocation> = null,
-    cause: Optional<Error> = null)
-  {
+    cause: Optional<Error> = null) {
     super(message, origin, cause);
     this.name = 'ReferenceError';
   }

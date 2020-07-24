@@ -26,7 +26,17 @@ import { Parser } from './Parser';
 import * as ast from './ast';
 import { createHash } from 'crypto';
 import { Optional } from './Optional';
-import { ReferenceError, BadMacroDefinition, SyntaxError, PurityViolationError, CharonError, CompileError } from './errors';
+import {
+  ReferenceError,
+  BadMacroDefinition,
+  SyntaxError,
+  PurityViolationError,
+  CharonError,
+  TypeError,
+  CompileError,
+  formatCodeSlice,
+  formatSourceLocation
+} from './errors';
 import {
   Context,
   CompileOptions,
@@ -71,7 +81,7 @@ export class Compiler extends Context<string, DataPlace> {
    * @param target
    */
   static compileFile(src: string, target: string = src.replace(/\..+$/, '.lua'), options: Partial<CompileOptions> = {}) {
-    const instance = Compiler.create({ ...presets.module ,...options });
+    const instance = Compiler.create({ ...presets.module, ...options });
     const out = instance.compile(readFileSync(src), src);
     writeFileSync(target, out);
   }
@@ -111,12 +121,11 @@ Please do not hesitate to provide additional steps for reproduction.
    * Lua target. Defaults to 5.3, a simple float.
    */
   public target: number;
-  
+
   private constructor(
     private readonly upper: Optional<Compiler> = null,
     private readonly pureContext: boolean = upper?.pureContext ?? false,
-    private readonly options: CompileOptions)
-  {
+    private readonly options: CompileOptions) {
     super(upper);
     this.target = upper?.target ?? 5.3;
   }
@@ -133,12 +142,15 @@ Please do not hesitate to provide additional steps for reproduction.
     return (`\n${rt}`).replace(/\n/g, '\n  ');
   }
 
+  private sourceName: string = '???';
+
   /**
    * Compiles the source code to target language.
    * @param input The source code to be compiled.
    * @param sourceName The name of the source, for error reporting.
    */
   compile(input: string | Buffer, sourceName: string) {
+    this.sourceName = sourceName;
     try {
       this.code = input.toString();
       const ast = this.parser.parse(input);
@@ -158,16 +170,53 @@ Please do not hesitate to provide additional steps for reproduction.
     return program.program.map(this.genInvoke.bind(this)).join(';\n');
   }
 
+  /**
+   * Generates a local variable binding statement.
+   * @param key
+   * @param val
+   * @param bind
+   */
+  private genNameBinding(key: ast.NAME, val: ast.Term): string {
+    const bound = this.registerVar(key, DataKind.LOCAL);
+    return `local ${bound.name} = ${this.genTerm(val)}`;
+  }
+
+  /**
+   * Generates a nested destructuring assignment expression.
+   * @param keys
+   * @param bind
+   */
+  private genListDestructure(keys: ast.Term[], val: ast.Term, bind: string[], tail: string = '') {
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      const access = `${tail}[${i}]`;
+      if (ast.isList(key)) {
+        this.genListDestructure(key.values, val, bind, access);
+      } else if (ast.isName(key)) {
+        bind.push(this.genNameBinding(key, val) + access);
+      } else {
+        throw new SyntaxError(`Destructuring expressions can only contain names or destructuring expressions! found ${key.type}`, key._location);
+      }
+    }
+  }
+
+  /**
+   * Generates the local value binding part of the let expression.
+   * @param args
+   */
   private genLetLocalBind(args: ast.List): String {
-    const bind = []
+    const bind: string[] = []
     for (let i = 0; i < args.values.length; i += 2) {
-      const name = args.values[i];
-      if (!ast.isName(name)) {
-        throw new SyntaxError(`Let binding pairs must start with names!`, name._location);
+      const key = args.values[i];
+      if (!ast.isName(key) && !ast.isList(key)) {
+        throw new SyntaxError(`Let binding pairs must start with names or destructuring expressions! found ${key.type}`, key._location);
       }
       const val = args.values[i + 1];
-      const bound = this.registerVar(name, DataKind.LOCAL);
-      bind.push(`local ${bound.name} = ${this.genTerm(val)}`);
+      if (ast.isName(key)) {
+        bind.push(this.genNameBinding(key, val));
+      } else {
+        this.genListDestructure(key.values, val, bind);
+      }
     }
     return bind.join(';')
   }
@@ -225,11 +274,11 @@ Please do not hesitate to provide additional steps for reproduction.
     const ref = this.getCheckedReference(name);
     switch (ref.name) {
       case '#def':
-          return this.genDef(invoke, true);
+        return this.genDef(invoke, true);
       case '#def-impure':
-          return this.genDef(invoke, false);
+        return this.genDef(invoke, false);
       case '#let':
-          return this.genLet(invoke);
+        return this.genLet(invoke);
       case '#three-dots':
         return `charon.list{...}`;
       case '#if': {
@@ -238,27 +287,8 @@ Please do not hesitate to provide additional steps for reproduction.
         const otherwise = this.termListLastReturns(args.slice(2));
         return `(function(${this.closure}) if ${condition} then return ${then}; else ${otherwise} end end)(${this.closure})`;
       }
-      case '#when': {
-        const condition = this.genTerm(args[0]);
-        if ((args.length - 1) % 2 !== 0) {
-          throw new SyntaxError(`When match expressions must be in pairs! Found stray key at the end of the block.`, invoke._location);
-        }
-        const cond: string[] = [];
-        let elseFields: ast.Term[] = [];
-        for (let i = 1; i < args.length; i += 2) {
-          const key = args[i];
-          if (ast.isWildcard(key)) {
-            elseFields.push(args[i + 1]);
-            continue;
-          }
-          const c = `${condition} == ${this.genTerm(key)}`;
-          const b = this.genTerm(args[i + 1]);
-          const stmt = `if ${c} then return ${b};`;
-          cond.push(stmt);
-        }
-        const elseExpr = elseFields.length === 0 ? '' : ` else ${this.termListLastReturns(elseFields)}`
-        return `(function(${this.closure}) ${cond.join(' else')}${elseExpr} end end)(${this.closure})`;
-      }
+      case '#when':
+        return this.genWhen(invoke, args);
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
       case '#for': {
@@ -274,7 +304,7 @@ Please do not hesitate to provide additional steps for reproduction.
       case '#try': {
         const catching = this.termListLastReturns(args.filter(isCatch));
         const trying = this.termListLastReturns(args.filter(not(isCatch)));
-        return `(function(${this.closure}) local _ok, _err = pcall(function(${this.closure}) ${trying} end${this.closure ? ', '+this.closure : ''}); if _ok then return _err; else ${catching} end end)(${this.closure})`;
+        return `(function(${this.closure}) local _ok, _err = pcall(function(${this.closure}) ${trying} end${this.closure ? ', ' + this.closure : ''}); if _ok then return _err; else ${catching} end end)(${this.closure})`;
       }
       case '#catch': {
         const binding = args[0];
@@ -355,9 +385,65 @@ Please do not hesitate to provide additional steps for reproduction.
     if (macro == null) {
       throw new ReferenceError(name.value, `Undefined macro ${name}`, invoke._location);
     }
-    return macro(ref?.name ?? '', args); 
+    return macro(ref?.name ?? '', args);
   }
 
+  /**
+   * Generate the when statement.
+   * @param invoke
+   * @param args
+   */
+  private genWhen(invoke: ast.Invoke, args: ast.Term[]) {
+    const condition = this.genTerm(args[0]);
+    if ((args.length - 1) % 2 !== 0) {
+      throw new SyntaxError(`When match expressions must be in pairs! Found stray key at the end of the block.`, invoke._location);
+    }
+    const cond: string[] = [];
+    let elseFields: ast.Term[] = [];
+    for (let i = 1; i < args.length; i += 2) {
+      const key = args[i];
+      if (ast.isName(key) && key.value === '_') {
+        if (elseFields.length > 0) {
+          console.warn(`WARN: Repeated fallback case on when!
+  at ${formatSourceLocation(this.sourceName, key._location)}
+${formatCodeSlice(this.code, key._location, 2)}`);
+        }
+        elseFields.push(args[i + 1]);
+        continue;
+      }
+      const body = this.genTerm(args[i + 1]);
+      if (ast.isList(key)) {
+        // Destructured match case
+        const match = key.values
+          .map((value, key) => {
+            return {
+              key,
+              value
+            };
+          })
+          .filter(pair => pair.value.type !== 'Token' || pair.value.value !== '_')
+          .map(pair => {
+            return `${condition}[${pair.key}] == ${this.genTerm(pair.value)}`;
+          })
+          .join(' and ');
+        const condExpr = `type(${condition}) == 'table' and ${match}`;
+        const stmt = `if ${condExpr} then return ${body};`;
+        cond.push(stmt);
+      } else {
+        // Equality check case
+        const c = `${condition} == ${this.genTerm(key)}`;
+        const stmt = `if ${c} then return ${body};`;
+        cond.push(stmt);
+      }
+    }
+    const elseExpr = elseFields.length === 0 ? '' : ` else ${this.termListLastReturns(elseFields)}`
+    return `(function(${this.closure}) ${cond.join(' else')}${elseExpr} end end)(${this.closure})`;
+  }
+
+  /**
+   * Generates the inport code.
+   * @param args
+   */
   private genImport(args: ast.Term[]): string {
     const targetOrBinder = args[0];
     if (ast.isString(targetOrBinder) || (ast.isName(targetOrBinder) && args.length === 1)) {
@@ -400,14 +486,14 @@ Please do not hesitate to provide additional steps for reproduction.
     if (args.length <= 1) {
       throw new SyntaxError(`Operator ${
         modus
-      } needs at least two arguments!`, invoke._location);
+        } needs at least two arguments!`, invoke._location);
     }
     const mapReduceArgs = (joiner: string) => {
       return uniquePairs(args)
         .map(
           compose(
             forAll(this.genTerm.bind(this)), joining(joiner)))
-            .join(' and ');
+        .join(' and ');
     };
     const parsedArgs = args.map(this.genTerm.bind(this))
     switch (modus) {
@@ -450,13 +536,13 @@ Please do not hesitate to provide additional steps for reproduction.
       default:
         throw new CharonError(`Unknown binary-like operator "${
           modus
-        }" passed. This is likely a bug in the parser, please issue a bug ${
+          }" passed. This is likely a bug in the parser, please issue a bug ${
           this.bug(
             'unexpected binary-like operator',
             'genBOP/switch',
             invoke._location
           )
-        }`, invoke._location);
+          }`, invoke._location);
     }
   }
 
@@ -499,7 +585,7 @@ Please do not hesitate to provide additional steps for reproduction.
     if (body == null) {
       throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report the issue here ${
         this.bug('the code generator', 'for inliner', invoke._location)
-      }.`, invoke._location);
+        }.`, invoke._location);
     }
     return `(function(${this.closure}) ${body} end)(${this.closure})`;
   }
@@ -511,21 +597,44 @@ Please do not hesitate to provide additional steps for reproduction.
    */
   private genInvoke(invoke: ast.Invoke): string {
     if (ast.isSymbol(invoke.target)) {
-      const getter: ast.Invoke = {
-        type: 'Invoke',
-        target: {
-          type: 'Token',
-          name: 'NAME',
-          value: 'table/get',
-          _location: invoke.target._location
-        },
-        args: [
-          invoke.target,
-          ...invoke.args
-        ],
-        _location: invoke._location
-      };
-      return this.genInvoke(getter);
+      const maybeInt = Number.parseInt(invoke.target.value);
+      if (Number.isNaN(maybeInt)) {
+        const getter: ast.Invoke = {
+          type: 'Invoke',
+          target: {
+            type: 'Token',
+            name: 'NAME',
+            value: 'table/get',
+            _location: invoke.target._location
+          },
+          args: [
+            invoke.target,
+            ...invoke.args
+          ],
+          _location: invoke._location
+        };
+        return this.genInvoke(getter);
+      } else {
+        const getter: ast.Invoke = {
+          type: 'Invoke',
+          target: {
+            type: 'Token',
+            name: 'NAME',
+            value: 'list/get',
+            _location: invoke.target._location
+          },
+          args: [
+            {
+              name: 'NUMBER',
+              type: 'Token',
+              value: invoke.target.value
+            } as ast.NUMBER,
+            ...invoke.args
+          ],
+          _location: invoke._location
+        };
+        return this.genInvoke(getter);
+      }
     } else if (ast.isName(invoke.target) || ast.isWildcard(invoke.target)) {
       const target = invoke.target;
       if (ast.isWildcard(target)) {
@@ -662,7 +771,14 @@ Please do not hesitate to provide additional steps for reproduction.
     const data = this.dataKindFromName(token);
     data.kind = kind;
     data.scope = scope;
-    if (scope === Scope.GLOBAL) this.setTop(data.original, data);
+    if (scope === Scope.GLOBAL) {
+      const top = this.getTop(data.original);
+      if (top != null && top.scope === Scope.GLOBAL) {
+        console.log(top);
+        throw new TypeError(`Attempting to redeclare ${data.original}!`, token._location);
+      }
+      this.setTop(data.original, data);
+    }
     else this.set(data.original, data);
     return data;
   }
@@ -708,6 +824,12 @@ Please do not hesitate to provide additional steps for reproduction.
     return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}) ${$.genDefBody(invoke)} end; return __self_ref__; end)()`;
   }
 
+  private readonly DEFS = {
+    'def': true,
+    'def-impure': true,
+    'def-value': true
+  } as const;
+
   /**
    * Grabs a list of terms and joins them, making the last return.
    * Used in do, if and function bodies, as last term is always the return
@@ -720,7 +842,12 @@ Please do not hesitate to provide additional steps for reproduction.
     let i = 0;
     for (const item of terms) {
       if (i++ === last) {
-        out.push(`return ${this.genTerm(item)};`)
+        if (ast.isInvoke(item) && ast.isName(item.target) && item.target.value in this.DEFS) {
+          out.push(this.genTerm(item));
+          out.push(`return charon.Unit;`);
+        } else {
+          out.push(`return ${this.genTerm(item)};`)
+        }
       } else {
         out.push(this.genTerm(item));
       }

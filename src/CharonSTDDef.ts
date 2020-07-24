@@ -456,7 +456,7 @@ export const stdlib = {
     }),
   'assert':
     _({
-      name: 'charon.assert'
+      name: 'assert'
       , kind: DataKind.FUNC
     }),
   'file/open':
@@ -548,6 +548,147 @@ export const stdlib = {
   'string/upper':
     _({
       name: 'string.upper'
+      , kind: DataKind.FUNC
+    }),
+  // Math bindings
+  'math/abs':
+    _({
+      name: 'math.abs'
+      , kind: DataKind.FUNC
+    }),
+  'math/acos':
+    _({
+      name: 'math.acos'
+      , kind: DataKind.FUNC
+    }),
+  'math/asin':
+    _({
+      name: 'math.asin'
+      , kind: DataKind.FUNC
+    }),
+  'math/atan':
+    _({
+      name: 'math.atan'
+      , kind: DataKind.FUNC
+    }),
+  'math/atan2':
+    _({
+      name: 'math.atan2'
+      , kind: DataKind.FUNC
+    }),
+  'math/ceil':
+    _({
+      name: 'math.ceil'
+      , kind: DataKind.FUNC
+    }),
+  'math/cos':
+    _({
+      name: 'math.cos'
+      , kind: DataKind.FUNC
+    }),
+  'math/cosh':
+    _({
+      name: 'math.cosh'
+      , kind: DataKind.FUNC
+    }),
+  'math/deg':
+    _({
+      name: 'math.deg'
+      , kind: DataKind.FUNC
+    }),
+  'math/exp':
+    _({
+      name: 'math.exp'
+      , kind: DataKind.FUNC
+    }),
+  'math/floor':
+    _({
+      name: 'math.floor'
+      , kind: DataKind.FUNC
+    }),
+  'math/fmod':
+    _({
+      name: 'math.fmod'
+      , kind: DataKind.FUNC
+    }),
+  'math/frexp':
+    _({
+      name: 'math.frexp'
+      , kind: DataKind.FUNC
+    }),
+  'math/ldexp':
+    _({
+      name: 'math.ldexp'
+      , kind: DataKind.FUNC
+    }),
+  'math/log':
+    _({
+      name: 'math.log'
+      , kind: DataKind.FUNC
+    }),
+  'math/log10':
+    _({
+      name: 'math.log10'
+      , kind: DataKind.FUNC
+    }),
+  'math/max':
+    _({
+      name: 'math.max'
+      , kind: DataKind.FUNC
+    }),
+  'math/min':
+    _({
+      name: 'math.min'
+      , kind: DataKind.FUNC
+    }),
+  'math/modf':
+    _({
+      name: 'math.modf'
+      , kind: DataKind.FUNC
+    }),
+  'math/pow':
+    _({
+      name: 'math.pow'
+      , kind: DataKind.FUNC
+    }),
+  'math/rad':
+    _({
+      name: 'math.rad'
+      , kind: DataKind.FUNC
+    }),
+  'math/random':
+    _({
+      name: 'math.random'
+      , kind: DataKind.FUNC
+    }),
+  'math/randomseed':
+    _({
+      name: 'math.randomseed'
+      , kind: DataKind.FUNC
+    }),
+  'math/sin':
+    _({
+      name: 'math.sin'
+      , kind: DataKind.FUNC
+    }),
+  'math/sinh':
+    _({
+      name: 'math.sinh'
+      , kind: DataKind.FUNC
+    }),
+  'math/sqrt':
+    _({
+      name: 'math.sqrt'
+      , kind: DataKind.FUNC
+    }),
+  'math/tan':
+    _({
+      name: 'math.tan'
+      , kind: DataKind.FUNC
+    }),
+  'math/tanh':
+    _({
+      name: 'math.tanh'
       , kind: DataKind.FUNC
     }),
 } as const;

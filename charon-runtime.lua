@@ -158,7 +158,7 @@ function charon.list_has(tbl, element, finder)
   return false;
 end
 
-function charon.list_get(tbl, key)
+function charon.list_get(key, tbl)
   assert(getmetatable(tbl) == List, "list/get only accepts lists.");
   assert(type(key) == 'number', "list/get key can only be numeric.");
   local field = tbl[key];

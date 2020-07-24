@@ -34,7 +34,7 @@ import { SyntaxError } from './errors';
  * Contextual nested key-svalue storage.
  */
 export class Context<K, V> {
-  constructor(private parent: Optional<Context<K, V>> = null) {}
+  constructor(private parent: Optional<Context<K, V>> = null) { }
   private store = new Map<K, V>();
 
   /**
@@ -43,7 +43,7 @@ export class Context<K, V> {
    */
   public get(key: K): Optional<V> {
     if (this.store.has(key)) return this.store.get(key) ?? null;
-    return this.parent?.get(key) ?? null; 
+    return this.parent?.get(key) ?? null;
   }
 
   /**
@@ -64,6 +64,18 @@ export class Context<K, V> {
     } else {
       this.parent.setTop(key, value);
     }
+  }
+
+  /**
+   * Attempts to get the value from the topmost context, ignoring the local
+   * if not top.
+   * @param key
+   */
+  public getTop(key: K): Optional<V> {
+    if (this.parent == null) {
+      return this.get(key);
+    }
+    return this.parent.getTop(key);
   }
 
   /**
@@ -102,7 +114,7 @@ export const DEFAULT_DATA_PLACE: DataPlace = {
 };
 
 export function dataPlace(init: Partial<DataPlace> = {}) {
-  return {...DEFAULT_DATA_PLACE, ...init};
+  return { ...DEFAULT_DATA_PLACE, ...init };
 }
 
 export type MacroFn = (name: string, args: ast.Term[]) => string;
@@ -113,8 +125,8 @@ export type MacroFn = (name: string, args: ast.Term[]) => string;
  */
 export function isCatch(term: ast.Term): boolean {
   return term.type === 'Invoke'
-      && term.target.type === 'Token'
-      && term.target.value === 'catch';
+    && term.target.type === 'Token'
+    && term.target.value === 'catch';
 }
 
 export function not<A extends any[], R>(func: (...args: A) => R) {

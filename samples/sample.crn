@@ -30,6 +30,8 @@
 ; Compose functions (Not the same as thread-thru!)
 (let [a (fn [x] (* x 2))
       b (fn [x] (+ x 5))]
+  (let [ab (>>= a b)]
+    (assert (= (b (a 3)) (ab 3))))
   (def-value ab
     (>>= a b)))
 (println! "(b (a 3)) = " (ab 3))
@@ -45,7 +47,45 @@
       :a "Is A!"
       :b "Is B!"
       :c "Is C!"
-      #  "Unexpected case.")))
+      _ "Unexpected case.")))
+
+; Complex matching when using the list literal
+(let [val ["a" 5 {:yes "you"}]]
+  (println! "Example: "
+    (when val
+      ["a" _ _] "Was A!"
+      [_ 5 _] "Was 5!"
+      _ "No match...")))
+
+; Repeated _ cases will be merged into a single else branch, but a warning will
+; be produced also.
+(when 1
+  :a (println! "a")
+  _ (println! "_")
+  _ (println! "_")
+  _ (println! "_"))
+
+; Other uses of the list literal: as a Tuple type.
+(let [tpl ["a" :b 5]]
+  (let [[a b c] tpl] ; Ease of destructure in let bindings, for example.
+    (println! tpl)
+    (println! "a: " (:0 tpl)) ; Table-like element access
+    (println! "a: " a)
+    (println! "b: " b)
+    (println! "c: " c)))
+
+; Tail recursion fibbonacci
+(def-value fib
+  (fn [n a? b?]
+      (let [a (or? a? 0)
+            b (or? b? 1)]
+        (if (= n 0) a
+          (if (= n 1) b
+            (#' (- n 1) b (+ a b)))))))
+
+; Using it like:
+(let [n 9]
+  (println! (str "fib(" n ") = " (fib 9))))
 
 ; For loop, for side-effects (Sometimes you need 'em).
 ; Numeric for like this one is optimized away as a normal for
