@@ -1,16 +1,23 @@
 ![Charon Logo](app.png)
 
+<!-- 
+Center aligned badges, not used at the moment.
 <p align="center">
   <a aria-label="License badge" href="LICENSE">
     <img alt="License badge" src="https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square">
   </a>
-  <a aria-label="Issues Badge" href="LICENSE">
+  <a aria-label="Issues Badge" href="https://github.com/sigmasoldi3r/charon-lang/issues">
     <img alt="Issues Badge" src="https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square">
   </a>
-  <a aria-label="Release Badge" href="LICENSE">
+  <a aria-label="Release Badge" href="https://github.com/sigmasoldi3r/charon-lang/releases">
     <img alt="Release Badge" src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square">
   </a>
 </p>
+-->
+
+[![License badge](https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square)](LICENSE)
+[![Issues Badge](https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/issues)
+[![Release Badge](https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/releases)
 
 # Charon Programming Language
 
