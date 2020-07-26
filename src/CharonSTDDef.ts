@@ -28,14 +28,39 @@ SOFTWARE.
 import { dataPlace as _, DataKind } from './CompilerExtras';
 
 export const stdlib = {
-  'def':
+  'defn':
     _({
       name: '#def'
       , kind: DataKind.MACRO_FUNC
     }),
-  'def-impure':
+  'defn!':
     _({
       name: '#def-impure'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'def':
+    _({
+      name: '#def-value'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'defn-':
+    _({
+      name: '#def-private'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'defn!-':
+    _({
+      name: '#def-impure-private'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'def-':
+    _({
+      name: '#def-value-private'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'declare':
+    _({
+      name: '#def-extern'
       , kind: DataKind.MACRO_FUNC
     }),
   'let':
@@ -227,14 +252,9 @@ export const stdlib = {
       name: '#import'
       , kind: DataKind.MACRO_FUNC
     }),
-  'def-value':
+  'module':
     _({
-      name: '#def-value'
-      , kind: DataKind.MACRO_FUNC
-    }),
-  'def-extern':
-    _({
-      name: '#def-extern'
+      name: '#module'
       , kind: DataKind.MACRO_FUNC
     }),
   'when':

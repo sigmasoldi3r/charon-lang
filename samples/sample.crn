@@ -21,6 +21,8 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 ;;;
+(module sample
+  [:import lib2 :from "samples/lib"])
 
 ; Example of import:
 (import lib :from "samples/lib")
@@ -32,7 +34,7 @@
       b (fn [x] (+ x 5))]
   (let [ab (>>= a b)]
     (assert (= (b (a 3)) (ab 3))))
-  (def-value ab
+  (def ab
     (>>= a b)))
 (println! "(b (a 3)) = " (ab 3))
 
@@ -75,7 +77,7 @@
     (println! "c: " c)))
 
 ; Tail recursion fibbonacci
-(def-value fib
+(def fib
   (fn [n a? b?]
       (let [a (or? a? 0)
             b (or? b? 1)]
@@ -101,14 +103,15 @@
 (for [v i (range 10 20)]
   (println! (str i " = " v)))
 
-; For security reasons, externs are considered impure.
-(def-extern myFunc)
+; For security reasons, externs are considered impure by default.
+(declare myFunc)
+(declare :pure mySum)
 
 ; Impure functions:
 (let [state (atom 0)]
-  (def-impure print-state []
+  (defn! print-state []
     (println! "State: " (atom/get state)))
-  (def-impure count []
+  (defn! count []
     (atom/reset! state
       (+ (atom/get state) 1))))
 
@@ -125,7 +128,7 @@
       (file/close file))
     (println! "Could not open file for writing!")))
 
-(def-value tester true)
+(def tester true)
 (if tester
   (+ 2 2)
   (println! "nooo")
@@ -135,19 +138,19 @@
   (println! "Simple dimple"))
 
 ; Comparison operators
-(def-value simple-eq (= 1 2))
-(def-value complex-eq (= 1 2 3 4))
-(def-value complex-lt (> 1 2 3 4))
-(def-value complex-gt (< 1 2 3 4))
-(def-value complex-gteq (>= 1 2 3 4))
+(def simple-eq (= 1 2))
+(def complex-eq (= 1 2 3 4))
+(def complex-lt (> 1 2 3 4))
+(def complex-gt (< 1 2 3 4))
+(def complex-gteq (>= 1 2 3 4))
 
 ; Logic operators
-(def-value all-or (or true false false true))
-(def-value all-and (and true false false true))
+(def all-or (or true false false true))
+(def all-and (and true false false true))
 ; "not" has 1-arity, so the excess of arguments produces error.
-(def-value simple-not (not true))
+(def simple-not (not true))
 ; Other stuff
-(def-value more-things
+(def more-things
   { :nor (nor true false true)
     :nand (nand true false true)
     :xor (xor true false) ; Plain old XOR
@@ -158,14 +161,14 @@
 (println! "xor =" (:xor more-things))
 (println! "xor-nary =" (:xor-nary more-things))
 
-(def double [x]
+(defn double [x]
   (* x 2))
 
 ; Lists
-(def-value doubles
+(def doubles
   (list/map [1 2 3 4] double))
 
-(def-value triples
+(def triples
   (list/map [1 2 3 4]
     (fn [x]
       (* x 3))))
@@ -181,7 +184,7 @@
     (println! "Thing two..."))
   (println! "This is part of the 'else'"))
 
-(def something [] unit)
+(defn something [] unit)
 
 ; Somewhat threading macros
 (println! "Result:"

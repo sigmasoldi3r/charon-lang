@@ -54,7 +54,9 @@ import {
   Scope,
   thread,
   dataPlace,
-  r, threadParallel
+  threadParallel,
+  isMetaSpecifier,
+  MetaSpecifier
 } from './CompilerExtras';
 import { stdlib } from './CharonSTDDef';
 import { version } from '../package.json';
@@ -131,7 +133,21 @@ Please do not hesitate to provide additional steps for reproduction.
   }
 
   private readonly parser = new Parser();
-  private readonly PKG = '__local_package';
+  private _nsRef = '__local_package';
+  private get nsRef() {
+    if (this.upper == null) {
+      return this._nsRef;
+    } else {
+      return this.upper.nsRef;
+    }
+  }
+  private set nsRef(value: string) {
+    if (this.upper == null) {
+      this._nsRef = value;
+    } else {
+      this.upper.nsRef = value;
+    }
+  }
   private code = '';
 
   private genEmbedRuntime() {
@@ -143,6 +159,17 @@ Please do not hesitate to provide additional steps for reproduction.
   }
 
   private sourceName: string = '???';
+  private _moduleName: Optional<string> = null;
+  private get moduleName() {
+    return this._moduleName;
+  }
+  private set moduleName(value: Optional<string>) {
+    this._moduleName = value;
+    const fallbackModule = this.sourceName.replace(/\.\w+?$/, '');
+    if (this.options.globalExport) {
+      this.nsRef = `_G["${this.moduleName ?? fallbackModule}"]`;
+    }
+  }
 
   /**
    * Compiles the source code to target language.
@@ -154,13 +181,36 @@ Please do not hesitate to provide additional steps for reproduction.
     try {
       this.code = input.toString();
       const ast = this.parser.parse(input);
-      const rt = this.options.embedRuntime
-        ? `local charon = {};\ndo${this.genEmbedRuntime()}\nend`
-        : `local charon = require 'charon-runtime';`
-        ;
-      const header = `${rt}\nlocal ${this.PKG} = {};\n`;
-      const srcOut = header + this.genProgram(ast).replace(/;;/g, ';');
-      return srcOut + `\nreturn ${this.PKG};\n`;
+      const rt = (() => {
+        if (this.options.embedRuntime) {
+          return `local charon = {};\ndo${this.genEmbedRuntime()}\nend`;
+        }
+        if (this.options.noRuntimeRequire) {
+          return '';
+        }
+        return `local charon = require 'charon-runtime';`;
+      })();
+      const fallbackModule = this.sourceName.replace(/\.\w+?$/, '');
+      if (this.options.globalExport) {
+        if (this.moduleName == null) {
+          console.warn(`WARN: No module name defined for this global module, assuming "${fallbackModule}"`);
+        }
+        this.nsRef = `_G["${this.moduleName ?? fallbackModule}"]`;
+      }
+      const program = this.genProgram(ast).replace(/;;/g, ';');
+      const header = (() => {
+        if (this.options.globalExport) {
+          return `${rt}\n${this.nsRef} = {};\n`;
+        }
+        return `${rt}\nlocal ${this.nsRef} = {};\n`;
+      })();
+      const srcOut = header + program;
+      return srcOut + (() => {
+        if (this.options.globalExport) {
+          return `\n-- End module ${this.nsRef}`
+        }
+        return `\nreturn ${this.nsRef};\n`;
+      })();
     } catch (err) {
       throw new CompileError(sourceName, input.toString(), err);
     }
@@ -279,6 +329,54 @@ Please do not hesitate to provide additional steps for reproduction.
         return this.genDef(invoke, false);
       case '#let':
         return this.genLet(invoke);
+      case '#def-value': {
+        if (this.pureContext) {
+          throw new PurityViolationError(`Value definition cannot be done from pure context.`, invoke._location);
+        }
+        const name = args[0];
+        if (!ast.isName(name)) {
+          throw new SyntaxError(`def-value must start with a name!`, invoke._location);
+        }
+        const val = args[1];
+        const local = this.registerVar(name, DataKind.LOCAL, Scope.GLOBAL);
+        return `${this.genScopedRef(local)} = ${this.genTerm(val)};`;
+      }
+      case '#def-extern': {
+        if (this.pureContext) {
+          throw new PurityViolationError(`Extern definition cannot be done from pure context.`);
+        }
+        const meta: MetaSpecifier[] = [];
+        const names = args.map(term => {
+          if (!ast.isName(term) && !ast.isSymbol(term))
+            throw new SyntaxError(`Only names and meta-specifiers are allowed in extern definitions!`);
+          if (ast.isSymbol(term)) {
+            const val = term.value;
+            if (!isMetaSpecifier(val)) {
+              throw new SyntaxError(`Unexpected meta-specifier found: "${term.value}"`, term._location);
+            }
+            if (meta.find(s => s === val)) {
+              throw new TypeError(`${term.value} meta-specifier was already declared.`, term._location);
+            }
+            meta.push(term.value as any);
+          }
+          return term;
+        });
+        const data = names.filter(ast.isName).map(name => {
+          const data = this.dataKindFromName(name);
+          data.kind = DataKind.LOCAL;
+          {
+            const found = meta.find(s => s === 'pure' || s === 'impure');
+            if (found != null) {
+              data.kind = found === 'pure' ? DataKind.FUNC : DataKind.IMPURE_FUNC;
+            }
+          }
+          data.scope = Scope.LOCAL;
+          data.name = data.original;
+          this.set(data.original, data);
+          return data;
+        });
+        return `-- Extern symbol ${data.map(s => s.name).join()} :: ${meta.join()}`;
+      }
       case '#three-dots':
         return `charon.list{...}`;
       case '#if': {
@@ -350,35 +448,32 @@ Please do not hesitate to provide additional steps for reproduction.
         return this.genBOP(invoke, ref.name, args);
       case '#import':
         return this.genImport(args);
-      case '#def-value': {
-        if (this.pureContext) {
-          throw new PurityViolationError(`Value definition cannot be done from pure context.`, invoke._location);
+      case '#module': {
+        if (args.length <= 0) {
+          throw new SyntaxError(`Module declaration must contain at least the name of the module.`, invoke._location);
         }
-        const name = args[0];
-        if (!ast.isName(name)) {
-          throw new SyntaxError(`def-value must start with a name!`, invoke._location);
+        if (!ast.isName(args[0])) {
+          throw new SyntaxError(`Module names should be valid identifiers, found ${args[0].type}`, args[0]._location);
         }
-        const val = args[1];
-        const local = this.registerVar(name, DataKind.LOCAL, Scope.GLOBAL);
-        return `${this.genScopedRef(local)} = ${this.genTerm(val)};`;
-      }
-      case '#def-extern': {
-        if (this.pureContext)
-          throw new PurityViolationError(`Extern definition cannot be done from pure context.`);
-        const names = args.map(term => {
-          if (!ast.isName(term))
-            throw new SyntaxError(`Only names are allowed in extern definitions!`);
-          return term
-        });
-        const data = names.map(name => {
-          const data = this.dataKindFromName(name)
-          data.kind = DataKind.LOCAL;
-          data.scope = Scope.LOCAL;
-          data.name = data.original;
-          this.set(data.original, data);
-          return data;
-        });
-        return `-- Extern symbol ${data.map(s => s.name).join()}`;
+        const name = args[0].value;
+        this.moduleName = name;
+        let imports = '';
+        if (args.length > 1) {
+          imports = args.slice(1).map(term => {
+            if (!ast.isList(term)) {
+              throw new SyntaxError(`Module declaration tail arguments can only contain import lists.`, term._location);
+            }
+            if (term.values.length !== 2 && term.values.length !== 4) {
+              throw new SyntaxError(`Module's import lists contains wrong number of arguments, expected 2 or 4.`, term._location);
+            }
+            const importSymbol = term.values[0];
+            if (!ast.isSymbol(importSymbol) || importSymbol.value !== 'import') {
+              throw new SyntaxError(`Import list first element must be :import!`, term._location);
+            }
+            return this.genImport(term.values.slice(1));
+          }).join('\n');
+        }
+        return `-- Module ${name}\n${imports}`;
       }
     }
     const macro = this.getMacro(ref?.name ?? '');
@@ -441,8 +536,9 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
   }
 
   /**
-   * Generates the inport code.
-   * @param args
+   * Generates the import code.
+   * Named modules can use identifiers instead of strings, if desired.
+   * @param args Must contain 1 or 3 items (import "...") or (import x :from "...")
    */
   private genImport(args: ast.Term[]): string {
     const targetOrBinder = args[0];
@@ -790,7 +886,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    */
   private genScopedRef(data: DataPlace): string {
     if (data.scope === Scope.GLOBAL) {
-      return `${this.PKG}["${data.original}"]`;
+      return `${this.nsRef}["${data.original}"]`;
     } else {
       return data.name;
     }
@@ -826,8 +922,9 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
 
   private readonly DEFS = {
     'def': true,
-    'def-impure': true,
-    'def-value': true
+    'defn': true,
+    'defn!': true,
+    'declare': true
   } as const;
 
   /**

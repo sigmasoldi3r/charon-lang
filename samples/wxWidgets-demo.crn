@@ -32,22 +32,22 @@
 ; http://wxlua.sourceforge.net/
 ;;
 (import "wx")
-(def-extern wx)
+(declare wx)
 
-(def-value frame
+(def frame
   (wx::wxFrame wx::NULL wx::wxID_ANY "wxLua Charon Lang Demo"
     wx::wxDefaultPosition (wx::wxSize 450 450) wx::wxDEFAULT_FRAME_STYLE))
 
 ; create a simple file menu
-(def-value file-menu (wx::wxMenu))
+(def file-menu (wx::wxMenu))
 (file-menu:Append wx::wxID_EXIT "E&xit" "Quit the program")
 
 ;create a simple help menu
-(def-value help-menu (wx::wxMenu))
+(def help-menu (wx::wxMenu))
 (help-menu:Append wx::wxID_ABOUT "&About" "Abouth this example")
 
 ; create a menu bar and append the file and help menus
-(def-value menu-bar (wx::wxMenuBar))
+(def menu-bar (wx::wxMenuBar))
 (menu-bar:Append file-menu "&File")
 (menu-bar:Append help-menu "&Help")
 

@@ -35,7 +35,7 @@ import { CharonError, CompileError } from './errors';
  * Entry point class.
  */
 export default class Main {
-  private constructor() {}
+  private constructor() { }
 
   /**
    * App main.
@@ -62,6 +62,18 @@ export default class Main {
         type: 'boolean',
         default: false,
         describe: 'Extracts the runtime to make it available in your local environment.'
+      })
+      .option('global-export', {
+        alias: 'g',
+        default: false,
+        type: 'boolean',
+        describe: 'Treats all exported modules as global symbols, including charon runtime.'
+      })
+      .option('no-runtime', {
+        alias: 'n',
+        default: false,
+        type: 'boolean',
+        describe: 'Makes compiled modules not require charon runtime explicitly.'
       })
       .option('variadic-closures', {
         default: false,
@@ -98,7 +110,9 @@ export default class Main {
       Compiler.compileFile(args._[0], args.output, {
         varargClosureBlocks: args["variadic-closures"],
         embedRuntime: args["embed-runtime"],
-        mode: args.type as any
+        mode: args.type as any,
+        noRuntimeRequire: args["no-runtime"],
+        globalExport: args["global-export"]
       });
     } catch (err) {
       if (err instanceof CompileError) {

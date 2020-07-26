@@ -266,11 +266,39 @@ export function invoke(value: string, _location: ast.CodeLocation, ...args: ast.
   };
 }
 
+function isLocated(object: any): object is ast.LocatedCode {
+  return object._location != null;
+}
+
+/**
+ * Generates the code mapping for each line.
+ * @param location
+ */
+export function codeMap(out: string, location: ast.CodeLocation | ast.LocatedCode) {
+  const { start, end } = isLocated(location) ? location._location : location;
+  return `${out} -- ${start.line}:${start.column},${end.line}:${end.column}\n`
+}
+
+export type MetaSpecifier
+  = 'pure'
+  | 'impure'
+  ;
+
+/**
+ * Returns true if the term/string is a valid MetaSpecifier.
+ * @param term
+ */
+export function isMetaSpecifier(val: string): val is MetaSpecifier {
+  return val === 'pure' || val === 'impure';
+}
+
 export interface CompileOptions {
   mode: 'IIFE' | 'function-module' | 'module';
   varargIIFE: boolean;
   varargClosureBlocks: boolean;
   embedRuntime: boolean;
+  noRuntimeRequire: boolean;
+  globalExport: boolean;
 }
 
 /**
@@ -281,12 +309,16 @@ export const presets = {
     mode: 'module',
     varargIIFE: false,
     varargClosureBlocks: true,
-    embedRuntime: false
+    embedRuntime: false,
+    noRuntimeRequire: false,
+    globalExport: false
   } as CompileOptions,
   module: {
     mode: 'module',
     varargIIFE: false,
     varargClosureBlocks: false,
-    embedRuntime: false
+    embedRuntime: false,
+    noRuntimeRequire: false,
+    globalExport: false
   } as CompileOptions
 } as const;
