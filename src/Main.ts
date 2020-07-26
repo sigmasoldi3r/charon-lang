@@ -98,7 +98,13 @@ export default class Main {
       .argv;
     if (args["extract-runtime"]) {
       console.log('Extracting runtime to current working directory...');
-      writeFileSync('charon-runtime.lua', readFileSync('charon-runtime.lua'));
+      let src: Buffer | string = readFileSync('charon-runtime.lua');
+      if (args["global-export"]) {
+        src = src.toString()
+          .replace(/local (charon.+?\n)/, '$1')
+          .replace(/(return charon;)/, '-- $1');
+      }
+      writeFileSync('charon-runtime.lua', src);
       // Prevent error when using only extract runtime.
       if (args._.length === 0) return 0;
     }
