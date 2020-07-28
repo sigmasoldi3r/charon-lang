@@ -75,19 +75,19 @@ impure, and for that same reason you can't mutate tables or lists.
 Examples:
 ```clj
 ; This is pure
-(def sum [a b]
+(defn sum [a b]
   (+ a b))
 
 ; This is impure
-(def-impure shout []
+(defn! shout []
   (println! "Hello!"))
 
 ; This is legal
-(def-impure something []
+(defn! something []
   (println! "2 + 2 =" (sum 2 2)))
 
 ; This is illegal
-(def some-other []
+(defn some-other []
   (shout))
 ```
 
@@ -134,7 +134,7 @@ To create a new list use the literal `[]`.
 
 ```clj
 ; Example
-(def-value my-list [1 2 3 4])
+(def my-list [1 2 3 4])
 ```
 
 ### Table
@@ -146,7 +146,7 @@ To create a new table use the literal `{}`.
 
 ```clj
 ; Example
-(def-value my-table
+(def my-table
   { :hello "World"
     :use "symbols for keys, usually."
     55 "But you can really use anything"
@@ -193,7 +193,7 @@ global):
 (my_object::static)
 
 ; Creates a new Lua table, keys are not symbols but strings (Plain old Lua).
-(def-value my_second_object
+(def my_second_object
   (object/new
     { :some_field "Hey"
       :some_other 539
@@ -283,12 +283,12 @@ call expression list one inside another:
 that actually composes functions (Therefore return new functions). This is
 considered **pure** despite that the produced function is impure.
 ```clj
-(def my-fn [a] (+ a 1))
-(def other [a] (* a 2))
-(def-value third
+(defn my-fn [a] (+ a 1))
+(defn other [a] (* a 2))
+(def third
   (>>= my-fn other))
 ; Equivalent:
-(def like-third [a]
+(defn like-third [a]
   (* (+ a 1) 2))
 ```
 
