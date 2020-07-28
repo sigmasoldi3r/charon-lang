@@ -39,7 +39,8 @@ charon.False = false
 
 local Symbol = {
   __tostring = function(self) return ':' .. self.value; end,
-  __concat = strcat
+  __concat = strcat,
+  __call = function(self) error 'Attempting to call symbol ' .. self .. '!'; end
 };
 local symbols = {};
 
@@ -114,7 +115,8 @@ local Atom = {
   __tostring = function(self)
     return 'atom{' .. tostring(self.value) .. '}';
   end,
-  __concat = strcat
+  __concat = strcat,
+  __call = function(self) error 'Attempting to call atom ' .. self .. '!'; end
 }
 
 function charon.atom(value)
@@ -140,7 +142,8 @@ local List = {
     end
     return self == b;
   end,
-  __concat = strcat
+  __concat = strcat,
+  __call = function(self) error 'Attempting to call list ' .. self .. '!'; end
 }
 
 function charon.list(tbl)
@@ -303,7 +306,8 @@ local Table = {
     end
     return '{ ' .. paired .. '}';
   end,
-  __concat = strcat
+  __concat = strcat,
+  __call = function(self) error 'Attempting to call table ' .. self .. '!'; end
 }
 
 function charon.table(tbl)
@@ -321,10 +325,12 @@ function charon.print(...)
 end
 
 function charon.atom_get(atom)
+  assert(getmetatable(atom) == Atom, "atom/get only accepts atoms.")
   return atom.value;
 end
 
 function charon.atom_set(atom, value)
+  assert(getmetatable(atom) == Atom, "atom/reset! only accepts atoms.")
   atom.value = value;
   return charon.Unit;
 end
