@@ -1,0 +1,116 @@
+:root {
+  --dark: #222034;
+  --pale-dark: #3f3f74;
+  --light: #ccdfe9;
+  --green: #99e550;
+}
+
+.bg-dark {
+  background-color: var(--dark) !important;
+}
+
+.bg-charon-light {
+  background-color: var(--light);
+}
+
+.bg-charon-light a {
+  color: var(--pale-dark);
+}
+
+.main {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-right: 2em;
+  padding-left: 2em;
+}
+
+.title-logo {
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+.title-logo > img {
+  max-width: 60%;
+}
+
+.wide-title {
+  width: 100%;
+}
+
+.code-example {
+  background-color: var(--dark);
+  border-radius: .5rem;
+  padding: 1em;
+  margin-bottom: 1em;
+}
+
+.code-example .CodeMirror {
+  width: 100%;
+  height: max-content;
+}
+
+/* .code-example > *:last-child {
+  border-left: 1px solid white;
+} */
+
+.main {
+  font-size: 1.2em;
+  line-height: 1.7;
+}
+
+.main blockquote * {
+  font-size: 1rem;
+}
+
+.main blockquote pre {
+  background-color: var(--pale-dark);
+  border-radius: .3em;
+  padding: 0.4em 0.6em;
+  color: var(--light);
+}
+
+.main code {
+  color: var(--light);
+  background-color: var(--pale-dark);
+}
+
+.main td {
+  padding: 0.3em 0;
+  vertical-align: top;
+}
+
+code,
+td code {
+  white-space: nowrap;
+  padding: 2px 8px;
+}
+
+.sidebar {
+  flex: 0 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  padding: 0;
+}
+
+.contents .nav .nav {
+  margin-left: 1em;
+  font-size: 0.9em;
+}
+
+.contents .nav-link {
+  padding: 0.2em 0.7em;
+}
+
+.contents .nav-link.active,
+.contents .nav-link.active a:hover,
+.contents .nav-link.active a:focus {
+  font-weight: 800;
+}
+
+/* #overview_editor-crn, #overview_editor-lua {
+  min-height: 512px;
+} */

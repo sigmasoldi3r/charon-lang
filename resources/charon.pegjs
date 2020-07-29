@@ -88,7 +88,7 @@ RPAREN
   { return { _location: location(), type: 'Token', value, name: 'RPAREN' } }
 
 NAME
-  = value:$([A-Za-z_?!@.,;`´¨ºª&¬/€$%~<>=|&^*'+-][A-Za-z0-9_?!@.,;`´¨ºª&¬/€$%~<>=|&^*'+-]*)
+  = value:$([A-Za-z_?!@.,`´¨ºª&¬/€$%~<>=|&^*'+-][A-Za-z0-9_?!@.,`´¨ºª&¬/€$%~<>=|&^*'+-]*)
   { return { _location: location(), type: 'Token', value, name: 'NAME' } }
 
 NUMBER

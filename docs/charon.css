@@ -1,0 +1,133 @@
+/*
+  Name: Charon
+*/
+
+.cm-s-charon.CodeMirror {
+  background-color: #222034;
+  color: #ffffff;
+}
+
+.cm-s-charon .CodeMirror-gutters {
+  background: #292D3E;
+  color: #676E95;
+  border: none;
+}
+
+.cm-s-charon .CodeMirror-guttermarker,
+.cm-s-charon .CodeMirror-guttermarker-subtle,
+.cm-s-charon .CodeMirror-linenumber {
+  color: #676E95;
+}
+
+.cm-s-charon .CodeMirror-cursor {
+  border-left: 1px solid #FFCC00;
+}
+
+.cm-s-charon div.CodeMirror-selected {
+  background: rgba(113, 124, 180, 0.2);
+}
+
+.cm-s-charon.CodeMirror-focused div.CodeMirror-selected {
+  background: rgba(113, 124, 180, 0.2);
+}
+
+.cm-s-charon .CodeMirror-line::selection,
+.cm-s-charon .CodeMirror-line>span::selection,
+.cm-s-charon .CodeMirror-line>span>span::selection {
+  background: rgba(128, 203, 196, 0.2);
+}
+
+.cm-s-charon .CodeMirror-line::-moz-selection,
+.cm-s-charon .CodeMirror-line>span::-moz-selection,
+.cm-s-charon .CodeMirror-line>span>span::-moz-selection {
+  background: rgba(128, 203, 196, 0.2);
+}
+
+.cm-s-charon .CodeMirror-activeline-background {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.cm-s-charon .cm-keyword {
+  color: #91a1ff;
+}
+
+.cm-s-charon .cm-operator {
+  color: #89DDFF;
+}
+
+.cm-s-charon .cm-variable-2 {
+  color: #EEFFFF;
+}
+
+.cm-s-charon .cm-variable-3,
+.cm-s-charon .cm-type {
+  color: #f07178;
+}
+
+.cm-s-charon .cm-builtin {
+  color: #FFCB6B;
+}
+
+.cm-s-charon .cm-atom {
+  color: #F78C6C;
+}
+
+.cm-s-charon .cm-number {
+  color: #eca116;
+}
+
+.cm-s-charon .cm-def {
+  color: #82AAFF;
+}
+
+.cm-s-charon .cm-string {
+  color: #99e550;
+}
+
+.cm-s-charon .cm-string-2 {
+  color: #f07178;
+}
+
+.cm-s-charon .cm-comment {
+  color: #9badb7;
+}
+
+.cm-s-charon .cm-variable {
+  color: #f07178;
+}
+
+.cm-s-charon .cm-tag {
+  color: #FF5370;
+}
+
+.cm-s-charon .cm-meta {
+  color: #FFCB6B;
+}
+
+.cm-s-charon .cm-attribute {
+  color: #C792EA;
+}
+
+.cm-s-charon .cm-property {
+  color: #C792EA;
+}
+
+.cm-s-charon .cm-qualifier {
+  color: #DECB6B;
+}
+
+.cm-s-charon .cm-variable-3,
+.cm-s-charon .cm-type {
+  color: #DECB6B;
+}
+
+
+.cm-s-charon .cm-error {
+  color: rgba(255, 255, 255, 1.0);
+  background-color: #FF5370;
+}
+
+.cm-s-charon .CodeMirror-matchingbracket {
+  text-decoration: underline;
+  color: white !important;
+}

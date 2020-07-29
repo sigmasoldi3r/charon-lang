@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=0.5">
+  <title>Charon Language</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="codemirror.css">
+  <link rel="stylesheet" href="charon.css">
+</head>
+
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="http://sigmasoldi3r.github.io/charon-lang">
+      <img src="app-title-white.png" />
+    </a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="#try">Try Charon online <span class="sr-only"></span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#reference">Language reference <span class="sr-only"></span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/sigmasoldi3r/charon-lang">
+            Github
+            <span class="sr-only"></span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div id="top" class="container-fluid">
+    <div class="row flex-nowrap main-row">
+
+      <!-- Navbar (Side) -->
+      <nav class="sidebar bg-charon-light">
+        <nav id="contents" class="navbar contents">
+          <nav class="nav flex-column">
+            <a href="#Introduction" class="nav-link" data-action="sidebar-nav">Introduction</a>
+            <a href="#Overview" class="nav-link" data-action="sidebar-nav">Overview</a>
+            <a href="#Installation" class="nav-link" data-action="sidebar-nav">Installation</a>
+            <nav class="nav flex-column">
+              <a href="#InstallWindows" class="nav-link" data-action="sidebar-nav">Windows</a>
+              <a href="#InstallOther" class="nav-link" data-action="sidebar-nav">Other</a>
+            </nav>
+            <a href="#Usage" class="nav-link" data-action="sidebar-nav">Usage</a>
+            <nav class="nav flex-column">
+              <a href="#UsageCLI" class="nav-link" data-action="sidebar-nav">Command Line</a>
+              <a href="#UsageAPI" class="nav-link" data-action="sidebar-nav">API Usage</a>
+            </nav>
+            <a href="#LanguageReference" class="nav-link" data-action="sidebar-nav">Language Reference</a>
+            <nav class="nav flex-column">
+              <a href="#Functions" class="nav-link" data-action="sidebar-nav">Functions</a>
+              <nav class="nav flex-column">
+                <a href="#FunctionPurity" class="nav-link" data-action="sidebar-nav">Function Purity</a>
+              </nav>
+            </nav>
+          </nav>
+        </nav>
+      </nav>
+
+      <!-- Body -->
+      <main class="main">
+        <header class="d-none d-lg-block wide-title">
+          <p class="title-logo">
+            <img src="app-title.png" />
+          </p>
+        </header>
+        <section id="Introduction">
+          <p>
+            <strong>
+              Charon is a lisp-like, simple language that compiles to
+              <a href="https://www.lua.org/">Lua</a>.
+            </strong>
+            Lua is a great programming language for embed systems, IoT and
+            general purpose scripting. Is widely used, is small and fast. Charon
+            is an attempt to take those traits, and provide the programmer with
+            a functional-style, more robust and with a touch of LISP
+            programming.
+          </p>
+          <p>
+            Charon only needs a small runtime for new types and functions, which
+            also can be embed. The key of Charon development is to maintain
+            always a strict interoperability with Lua systems, so existing
+            codebase can be maintained, and binding code is easier to write.
+          </p>
+          <p>
+            Currently, Charon is under <strong>heavy development,</strong> and
+            many aspects have to be defined yet.
+          </p>
+          <h4>
+            Latest version
+          </h4>
+          <p>
+            <a aria-label="Release Badge" href="https://github.com/sigmasoldi3r/charon-lang/releases">
+              <img alt="Release Badge"
+                src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square">
+            </a>
+          </p>
+        </section>
+        <section id="Overview">
+          <h2>Overview</h2>
+          <p>
+            Charon on the left, and the Lua result on the right.
+          </p>
+          <em>
+            Currently, the produced code is ugly and spans less lines. This will
+            change in future releases.
+          </em>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="overview_editor-crn">; Simple matching:
+(let [val :b]
+  (println! "when " val " = "
+    (when val
+      :a "Is A!"
+      :b "Is B!"
+      :c "Is C!"
+      _ "Unexpected case.")))
+
+; Tail recursion fibbonacci
+(def fib
+  (fn [n a? b?]
+      (let [a (or? a? 0)
+            b (or? b? 1)]
+        (if (= n 0) a
+          (if (= n 1) b
+            (#' (- n 1) b (+ a b)))))))
+
+; Using it like:
+(let [n 9]
+  (println! (str "fib(" n ") = " (fib 9))))
+
+; For loop, for side-effects (Sometimes you need 'em).
+; Numeric for like this one is optimized away as a normal for
+(for [i (range 0 10)]
+  (println! (str "i = " i)))
+
+; Other sources of iterable components are transformed to pairs:
+(for [v [1 2 3 4]]
+  (println! (str "v = " v)))
+
+(defn double [x]
+  (* x 2))
+
+; Lists
+(def doubles
+  (list/map [1 2 3 4] double))
+
+(def triples
+  (list/map [1 2 3 4]
+    (fn [x]
+      (* x 3))))
+
+; Do blocks!
+(if true
+  (do
+    (println! "Thing one")
+    (println! "Thing two..."))
+  (println! "This is part of the 'else'"))
+
+; Somewhat threading macros
+(println! "Result:"
+  (-> 2
+    (+ 4)
+    (* 8)))
+    
+(declare :pure something)
+
+; Try catch!
+(try (something)
+  (catch [err]
+    (println! "Error! " err)))
+
+; For sake of optimization, instead of reducing functions, arithmetics are
+; expanded to their binary operator counterparts.
+(println! "Arithmetic expansion! "
+  (+ (- 2 5 6) 1 2 3 4 5 (* 1 2 6 8)))</textarea>
+              <!-- <div class="col-sm-6 editor-panel" id="overview_editor-lua"></div> -->
+            </div>
+          </aside>
+        </section>
+        <section id="Installation">
+          <h2>Installation</h2>
+          <p>
+            Installation methods are being improved right now, nothing is stable
+            yet, so expect this to change in the future.
+          </p>
+          <h3 id="InstallWindows">Windows</h3>
+          <p>
+            Right now installing Charon for Windows is as simple as downloading
+            the binaries of the latest build, plus registering it's location to
+            the path.
+            You can download them at the
+            <a href="https://github.com/sigmasoldi3r/charon-lang/releases">
+              releases page.
+            </a>
+          </p>
+          <h3 id="InstallOther">Other</h3>
+          <p>
+            No packages are distributed yet for other OSes, so the best solution
+            is to build from source.
+          </p>
+          <blockquote class="uneditable-code-block">
+            <pre><code class="language-bash">git clone https://github.com/sigmasoldi3r/charon-lang.git</code></pre>
+          </blockquote>
+          <p>
+            After that, you can just run, in case of you having <strong>
+              Yarn</strong>:
+          </p>
+          <blockquote class="uneditable-code-block">
+            <pre><code class="language-bash">yarn install && yarn build && yarn dist</code></pre>
+          </blockquote>
+          <p>
+            After that, you can just run, in case of you using <strong>
+              npm</strong>:
+          </p>
+          <blockquote class="uneditable-code-block">
+            <pre><code class="language-bash">npm install && npm run build && npm run dist</code></pre>
+          </blockquote>
+          <p>
+            Remember to add the binaries to your path, the last command will
+            generate them on the <code>dist/</code> folder. If you can't or
+            don't want to generate binaries, you can just use the produced
+            Javascript file.
+          </p>
+        </section>
+        <section id="Usage">
+          <h2>Usage</h2>
+          <h3 id="UsageCLI">Command Line</h3>
+          If the compiler is installed, you should have access to the command
+          <code>charon</code>, which can compile <code>.crn</code> files into
+          <code>.lua</code> files. At this moment, no REPL is available to test
+          charon directly. <code>charon</code> command options are:
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              Options:
+              <tr>
+                <td><code>--help</code></td>
+                <td>Show help</td>
+              </tr>
+              <tr>
+                <td><code>--output, -o</code></td>
+                <td>Output file, optional.</td>
+              </tr>
+              <tr>
+                <td><code>--embed-runtime, -e</code></td>
+                <td>Embeds the runtime instead of requiring it. Use for
+                  standalone environments.</td>
+              </tr>
+              <tr>
+                <td><code>--extract-runtime, -x</code></td>
+                <td>Extracts the runtime to make it available in your
+                  local environment.</td>
+              </tr>
+              <tr>
+                <td><code>--global-export, -g</code></td>
+                <td>Treats all exported modules as global symbols,
+                  including charon runtime.</td>
+              </tr>
+              <tr>
+                <td><code>--no-runtime, -n</code></td>
+                <td>Makes compiled modules not require charon runtime
+                  explicitly.</td>
+              </tr>
+              <tr>
+                <td><code>--variadic-closures, -s</code>&nbsp;</td>
+                <td>Makes all immediate closures variadic (if, do and
+                  such blocks).</td>
+              </tr>
+              <tr>
+                <td><code>--type, -t</code></td>
+                <td>Compilation mode, will tell how the file is produced.
+                  CURRENTLY SUPPORTS MODULE ONLY!</td>
+              </tr>
+              <tr>
+                <td><code>--config, -c</code></td>
+                <td>Configuration file for batch compile of projects. NOT
+                  USED CURRENTLY.</td>
+              </tr>
+              <tr>
+                <td><code>--version</code></td>
+                <td>Show version number</td>
+              </tr>
+            </tbody>
+          </table>
+          <h4>Example</h4>
+          <p>
+            Compile your main script <code>main.crn</code> into a Lua script:
+            <code>charon main.crn</code>
+          </p>
+          <h3 id="UsageAPI">API Usage</h3>
+          <p>
+            You can use some parts of the compiler as an embed compiler, like in
+            web browsers, or in a Node.JS application.
+          </p>
+          <p>
+            There is not much focus on API usage yet, but you can import the
+            individual modules from <code>build/src/</code> folder once built.
+          </p>
+          <p>
+            Include <code>build/src/Compiler.js</code> file, (Or in case of a
+            Typescript project <code>src/Compiler.ts</code>). Then you can
+            simply run the <code>Compiler#compileFile</code> method:
+          </p>
+          <blockquote class="uneditable-code-block">
+            <pre><code>Compiler.compileFile('input.crn', 'output.lua');</code></pre>
+          </blockquote>
+          <p>
+            If you have access to the <strong>Node.JS filesystem</strong>. Else
+            you can build your own instance of the compiler, and avoid using the
+            static compile method:
+          </p>
+          <blockquote class="uneditable-code-block">
+            <pre><code>
+              const instance = Compiler.create({ ...presets.module });
+              <br/>
+              &nbsp;const out = instance.compile('input source', 'source name');
+            </code></pre>
+          </blockquote>
+        </section>
+        <section id="LanguageReference">
+          <h2>Language Reference</h2>
+          <p>
+            First of all, <strong>Charon</strong> uses a Lisp-like syntax. If
+            you're familiar with any Lisp family language, specially the
+            <strong>Clojure</strong> family, it will be easier to understand.
+          </p>
+          <p>
+            This implies that the language uses
+            <a href="https://en.wikipedia.org/wiki/Polish_notation">
+              Prefix or Polish notation</a>. This translates, in practical
+            terms, to the idea that <a href="#NotationExceptions">almost</a>
+            every Charon expression will come in a prefix notation, instead of
+            infix or postfix, and surrounded by parenthesis.
+          </p>
+          <p>
+            In most languages, binary operators are infix, you tipically do:
+            <code>2 + 2</code>. In Charon instead, you would write something
+            like: <code>(+ 2 2)</code>. They mean the same thing in two
+            different languages.
+          </p>
+          <p>
+            same applies for function calls, almost all languages use postfix
+            notation for function calls. You could possibly write:
+            <code>myFunc(1, 2)</code>, but remember that no postfix notation is
+            used, this includes the call expression, so, in Charon:
+            <code>(myFunc 1 2)</code>.
+          </p>
+          <p id="NotationExceptions">
+            One exception is the <strong>member access expressions</strong>,
+            which come in infix notation. You are allowed to access unbounded
+            elements with <code>this::expression::of::here</code>, and bounded
+            with <code>that:other-expression</code>. This will be cleared later
+            on.
+          </p>
+          <!-- FUNCTIONS -->
+          <h3 id="Functions">Functions</h3>
+          <p>
+            Functions in charon can be defined in four ways:
+          </p>
+          <ul>
+            <li>As pure package functions <code>(defn)</code>.</li>
+            <li>As impure package functions <code>(defn!)</code>.</li>
+            <li>As pure anonymous functions <code>(fn)</code>.</li>
+            <li>As impure anonymous functions <code>(fn!)</code>.</li>
+          </ul>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="funcs_editor-crn">; Pure functions
+(defn my-pure-func [x y z]
+  (+ (** x 2) (** y 2) (** z 2)))
+
+; Impure functions
+(defn! my-impure-func [x]
+  (println! "Hello" x))
+
+; Pure anonymous function
+(fn [a b c]
+  (+ a b c))
+
+; Impure anonymous function
+(fn! [x]
+  (println! "Hi" x))</textarea>
+              <!-- <div class="col-sm-6 editor-panel" id="funcs_editor-lua"></div> -->
+            </div>
+          </aside>
+          <h4 id="FunctionPurity">Function Purity</h4>
+          <p>
+            In charon, we can distinguish by two main types of functions: Pure
+            and Impure. Pure functions cannot invoke impure ones, but impure can
+            invoke pure ones.
+          </p>
+          <p>
+            Pure functions are expected to not have side effects. This makes
+            them easier to test, predictable and able to be memoized.
+          </p>
+          <p>
+            However, due to the idea of easy interoperability, and the fact that
+            runs close to Lua, most of the time you will have to manipulate the
+            state, or call outside functions which are impure (Due to the fact
+            that you can't ensure purity).
+          </p>
+        </section>
+        <section id="Strings">
+          <h2>Strings</h2>
+          <p>
+            Like in Lua and other languages, strings can be delimited by the
+            double quote character <code>"</code>. In Charon, the single quote
+            character <code>'</code> is used as an identifier and other
+            constructs, so a single-quoted string is <strong>invalid</strong>.
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="strings_editor-crn">; Multiline
+(def sentence "Here is some long,
+multiple lines spanning,
+Charon string.
+
+-- Charon docs")</textarea>
+            </div>
+          </aside>
+          <p>
+            Also, strings support new lines, and interpolation by using the
+            dollar symbol <code>$var-name</code> or
+            <code>$(some "expression")</code>.
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="strings-interpol_editor-crn">; Interpolation
+(def who "World!")
+(def quote "Hello $who")
+(def sqrt-of-two "Maybe $(/ 577 408) is a good approximation of √2")</textarea>
+            </div>
+          </aside>
+          <p>
+            Concatenation of many strings is also possible with the <code>str</code>
+            function, which takes all the arguments and joins them into a single
+            string. If the argument is not a string, it will attempt to convert it
+            to string.
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="strings-strcat_editor-crn">; Concatenation
+(def s "string")
+(str "Some " s " pieces, 2 + 2 = " (+ 2 2))</textarea>
+            </div>
+          </aside>
+          <h3 id="Lists">Lists</h3>
+          <p>
+            List is the basic sequential structure in Charon, and can be defined
+            though the list object literal <code>[ ]</code>.
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="lists_editor-crn">; List's elements are separated by spaces
+; Also can contain any sort of object
+(def some-list [1 2 3 4 5 "hi" :bob])</textarea>
+            </div>
+          </aside>
+          <p>
+            As lists are heterogeneous in type, and <strong>immutable</strong>,
+            they can be used as a <i>Tuple</i> type.
+          </p>
+          <p>
+            To extract the nth item of a list, you can use the <strong>tuple access</strong>
+            syntax, or the <strong>list access</strong> syntax:
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="lists-get_editor-crn">; Both translate to the same in the end
+(def my-list ["bob" "alice" "john"])
+(def first-elem (:1 my-list))
+(def second-elem (list/get 2 my-list))
+
+; In let statements, you can use the tuple destructure syntax:
+(let [[_ _ third-elem] my-list])</textarea>
+            </div>
+          </aside>
+          <issue number="11"></issue>
+
+          <h3 id="Tables">Tables</h3>
+          <p>
+            Tables in Charon are what you might now as <i>Maps</i> or <i>Dictionaries</i>
+            in other programming languages.
+          </p>
+          <p>
+            Not to be confused with the <strong>Lua's notion of table</strong>,
+            which is a similar structure (In the sense that they're both hash
+            tables). We diferentiate them in Charon by calling those <strong>
+              Objects
+            </strong>.
+          </p>
+          <p>
+            Creating a table is done through the table literal <code>{ }</code>,
+            which always should contain pairs of key-value elements. In charon,
+            is very common the use of <strong>Symbols</strong> as keys, but you
+            can use whatever type you want. As Lists, they're heterogeneous.
+          </p>
+          <aside class="code-example container-fluid">
+            <div class="row">
+              <textarea class="col-sm-12 editor-panel" id="lists_editor-crn">; The procedure is similar to lists
+; Also can contain any sort of data type
+(def some-table
+  { :hello       "World"
+    :this        "is a table"
+    :anything    "Can be a key"
+    "like me!"   19294
+    1549         [1 2 3 4]
+    :even-tables { :hi :o }
+    :symbols     :can-be-values-too})</textarea>
+            </div>
+          </aside>
+        </section>
+        <p>
+          Lacking an even number of entries will result in a compile error.
+        </p>
+        <issue number="10"></issue>
+
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Bootstrap scripts -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+
+  <!-- Editor and other scripts -->
+  <script src="codemirror.js"></script>
+  <script src="simple.js"></script>
+  <script src="lua.js"></script>
+  <script src="mode-charon.js"></script>
+  <script src="index.js"></script>
+</body>
+
+</html>

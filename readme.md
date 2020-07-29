@@ -1,23 +1,19 @@
-![Charon Logo](app.png)
+![Charon Logo](app-title-wide.png)
 
-<!-- 
-Center aligned badges, not used at the moment.
 <p align="center">
   <a aria-label="License badge" href="LICENSE">
-    <img alt="License badge" src="https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square">
+    <img alt="License badge" src="https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=for-the-badge">
   </a>
   <a aria-label="Issues Badge" href="https://github.com/sigmasoldi3r/charon-lang/issues">
-    <img alt="Issues Badge" src="https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square">
+    <img alt="Issues Badge" src="https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=for-the-badge">
   </a>
   <a aria-label="Release Badge" href="https://github.com/sigmasoldi3r/charon-lang/releases">
-    <img alt="Release Badge" src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square">
+    <img alt="Release Badge" src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=for-the-badge">
+  </a>
+  <a aria-label="Discord Badge" href="">
+    <img alt="Discord Badge" src="https://img.shields.io/discord/736229755677835305?style=for-the-badge&logo=discord&logoColor=white">
   </a>
 </p>
--->
-
-[![License badge](https://img.shields.io/github/license/sigmasoldi3r/charon-lang?style=flat-square)](LICENSE)
-[![Issues Badge](https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/issues)
-[![Release Badge](https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=flat-square)](https://github.com/sigmasoldi3r/charon-lang/releases)
 
 # Charon Programming Language
 
@@ -49,6 +45,29 @@ locally by running `charon --extract-runtime`.
 
 Otherwise you can just compile normally and provide `--embed-runtime` for every
 file.
+
+## Contributing
+
+If you want to support this project, you can become a backer,
+sponsor or a contributor. Any of those, will be very helpful,
+even if your unique contribution is fix a typo in the readme!
+
+[![backer badge](https://img.shields.io/badge/become-a_backer-_?style=for-the-badge)](https://github.com/sponsors/sigmasoldi3r)
+
+Or you can also contribute to the project!
+
+[![Issues Badge](https://img.shields.io/github/issues/sigmasoldi3r/charon-lang?style=for-the-badge)](https://github.com/sigmasoldi3r/charon-lang/issues)
+
+**Made a project with Charon?**
+
+You can place the Charon's badge in your readme to help spread
+the word!
+
+[![Charon Badge](https://img.shields.io/badge/made_with-Charon-3f3f74?style=for-the-badge&link=https://github.com/sigmasoldi3r/charon-lang&logoWidth=25&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAlxJREFUWIXtlr9rk0Ecxj8n/Rekg5GGkEF0aIcsRQhOggglkM3NSRxKx1gsAUsgdFSnoHQoqIO8ol3qGITSpcP7urRTaZpmCF066XgOfe96b967vPe+BETwgUDeu+/d89zz/d4P+I+/DJEzXmbN12l3bXFiY3M9J1WaOIscQHbaXfku2JMmOu2ujIWlcMOTWODhVqfdZX5xCYD3X77r9pevXqi5UpjLINekvVEjMcHF8ZI4+vaUD28WNPk0KBEbm+uJhbgcSJDbcPNOKAFZKddkpVyzxpguuGAT4CIXl2fVRHu9tcbySgAgt3cCAMZRmEvEtBQk8OzWVwB6o4bAnk/dNo5CXQtKxDgKmbQf0g5kWq+EmIhdYHsn0GPHUZj4xfOmhJsCMskN6Lh6a83WJya/XeeAdwo8YVa5tY6YWGjWOeANlQbXjnBBCfC2vzdqqHgNSxpyC5glMu8LM6aIACdBkTTkEhDbr/Fj67X+XzQNM0+BOhl9XUhtw3hgyubWfimRO7X6rfvntPZLwJULpit5BAhA3rv7SPz+dSFvLzzQAaXF1ZioKRWRJ1w7y30OTJKbMMnVKg92m9bYPMU4Zwa6yDOgViPhuhjrrRKfnz9meSXQbwYsrmQW4Xn01lrh5uptFxTAfPmhPNhtTj0XVA1IgOGgb3Xh45MqcF0PJk5OD5UI0Rs1uDyr8vPTquu6TtWEAKiUa3pAVhqGgz4np4d5X9NOAakUDAf9AnMXIzcFJDpnKMJ8VVvhLEKbiLjN136v57zudJ2AcFUXce49uZNzewdNEwGInAL+DfwBXCfqVaSscnUAAAAASUVORK5CYII=)](https://github.com/sigmasoldi3r/charon-lang)
+
+You have the code for the badge [at the bottom of the document](#badges).
+
+## The Language
 
 ### Function purity
 
@@ -103,6 +122,34 @@ of "assigning" a variable as other languages do.
 
 ## Standard library
 
+Data structures are immutable in Charon, besides the `object` type, for
+interoperability reasons.
+
+This means that Charon provides no means to alter an already created `list`,
+`table`, `symbol` or string. Also those structures are frozen by default in
+order to prevent escaping the immutability.
+
+You could have:
+
+```clj
+(declare myLuaFunc)
+(def my-list [1 2 3])
+; my-list should remain [1 2 3] FOREVER, def is also constant.
+(myLuaFunc my-list)
+```
+
+And in Lua, you could try to escape this:
+
+```lua
+function myLuaFunc(charonList)
+  charonList[4] = 27;
+  -- I did-it!
+end
+```
+
+As said before, to prevent this from happening the program will throw an error
+upon modification of any fields of the data structure.
+
 Module system is described in [docs/Module System](docs.md#module-system).
 
 Charon standard library is small, it relies on Lua standard library for most
@@ -113,6 +160,33 @@ things.
 Note: All functions, methods and operators are being documented at
 [docs.md](docs.md), but still being written. This document is a simple
 introduction to the language and it's features.
+
+### String interpolation
+
+Typically, to concatenate strings you would do:
+
+```clj
+(def world "World!")
+(def mystr
+  (str "Hello, " world))
+(def my-result
+  (str "2 + 2 is " (+ 2 2)))
+```
+
+Which works OK, but sometimes can be less readable and tedious. Instead you can
+just use the string interpolation token and place any s-expression or name:
+
+```clj
+(println! "Hello, $world")
+
+(println! "You can do 2 + 2 = $(+ 2 2)")
+; Prints "You can do 2 + 2 = 4"
+
+; Want to escape?
+(def mystr "Be like \$(+ 2 2) = $(+ 2 2)")
+(println! mystr)
+; Prints "Be like $(+ 2 2) = 4"
+```
 
 ### List
 
@@ -298,3 +372,21 @@ More notes: import does not read any symbol from the module (Nor does export
 the module any). This means that purity checks between library calls are faked
 at the moment. The plan is to add symbols to Charon modules, and detect when
 those are not charon modules in order to make purity check stricter.
+
+# Badges
+
+You can embed the Charon language badge on your website or readme.
+
+Markdown:
+
+```md
+[![Charon Badge](https://img.shields.io/badge/made_with-Charon-3f3f74?style=for-the-badge&link=https://github.com/sigmasoldi3r/charon-lang&logoWidth=25&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAlxJREFUWIXtlr9rk0Ecxj8n/Rekg5GGkEF0aIcsRQhOggglkM3NSRxKx1gsAUsgdFSnoHQoqIO8ol3qGITSpcP7urRTaZpmCF066XgOfe96b967vPe+BETwgUDeu+/d89zz/d4P+I+/DJEzXmbN12l3bXFiY3M9J1WaOIscQHbaXfku2JMmOu2ujIWlcMOTWODhVqfdZX5xCYD3X77r9pevXqi5UpjLINekvVEjMcHF8ZI4+vaUD28WNPk0KBEbm+uJhbgcSJDbcPNOKAFZKddkpVyzxpguuGAT4CIXl2fVRHu9tcbySgAgt3cCAMZRmEvEtBQk8OzWVwB6o4bAnk/dNo5CXQtKxDgKmbQf0g5kWq+EmIhdYHsn0GPHUZj4xfOmhJsCMskN6Lh6a83WJya/XeeAdwo8YVa5tY6YWGjWOeANlQbXjnBBCfC2vzdqqHgNSxpyC5glMu8LM6aIACdBkTTkEhDbr/Fj67X+XzQNM0+BOhl9XUhtw3hgyubWfimRO7X6rfvntPZLwJULpit5BAhA3rv7SPz+dSFvLzzQAaXF1ZioKRWRJ1w7y30OTJKbMMnVKg92m9bYPMU4Zwa6yDOgViPhuhjrrRKfnz9meSXQbwYsrmQW4Xn01lrh5uptFxTAfPmhPNhtTj0XVA1IgOGgb3Xh45MqcF0PJk5OD5UI0Rs1uDyr8vPTquu6TtWEAKiUa3pAVhqGgz4np4d5X9NOAakUDAf9AnMXIzcFJDpnKMJ8VVvhLEKbiLjN136v57zudJ2AcFUXce49uZNzewdNEwGInAL+DfwBXCfqVaSscnUAAAAASUVORK5CYII=)](https://github.com/sigmasoldi3r/charon-lang)
+```
+
+Or HTML:
+
+```html
+<a href="https://github.com/sigmasoldi3r/charon-lang">
+  <img src="https://img.shields.io/badge/made_with-Charon-3f3f74?style=for-the-badge&link=https://github.com/sigmasoldi3r/charon-lang&logoWidth=25&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAlxJREFUWIXtlr9rk0Ecxj8n/Rekg5GGkEF0aIcsRQhOggglkM3NSRxKx1gsAUsgdFSnoHQoqIO8ol3qGITSpcP7urRTaZpmCF066XgOfe96b967vPe+BETwgUDeu+/d89zz/d4P+I+/DJEzXmbN12l3bXFiY3M9J1WaOIscQHbaXfku2JMmOu2ujIWlcMOTWODhVqfdZX5xCYD3X77r9pevXqi5UpjLINekvVEjMcHF8ZI4+vaUD28WNPk0KBEbm+uJhbgcSJDbcPNOKAFZKddkpVyzxpguuGAT4CIXl2fVRHu9tcbySgAgt3cCAMZRmEvEtBQk8OzWVwB6o4bAnk/dNo5CXQtKxDgKmbQf0g5kWq+EmIhdYHsn0GPHUZj4xfOmhJsCMskN6Lh6a83WJya/XeeAdwo8YVa5tY6YWGjWOeANlQbXjnBBCfC2vzdqqHgNSxpyC5glMu8LM6aIACdBkTTkEhDbr/Fj67X+XzQNM0+BOhl9XUhtw3hgyubWfimRO7X6rfvntPZLwJULpit5BAhA3rv7SPz+dSFvLzzQAaXF1ZioKRWRJ1w7y30OTJKbMMnVKg92m9bYPMU4Zwa6yDOgViPhuhjrrRKfnz9meSXQbwYsrmQW4Xn01lrh5uptFxTAfPmhPNhtTj0XVA1IgOGgb3Xh45MqcF0PJk5OD5UI0Rs1uDyr8vPTquu6TtWEAKiUa3pAVhqGgz4np4d5X9NOAakUDAf9AnMXIzcFJDpnKMJ8VVvhLEKbiLjN136v57zudJ2AcFUXce49uZNzewdNEwGInAL+DfwBXCfqVaSscnUAAAAASUVORK5CYII=">
+</a>
+```
