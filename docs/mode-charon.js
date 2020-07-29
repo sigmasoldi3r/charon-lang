@@ -12,7 +12,7 @@
   CodeMirror.defineMode("charon", function (options) {
     var atoms = ["false", "unit", "true"];
     var specialForms = ["catch", "def", "do", "if", "when",
-      "monitor-exit", "recur", "set!", "throw", "try"];
+      "monitor-exit", "recur", "set!", "throw", "try", "#'"];
     var coreSymbols = ["*", "**", "*'", "*1", "*2", "*3",
       "*allow-unresolved-vars*", "*assert*", "*charon-version*",
       "*command-line-args*", "*compile-files*", "*compile-path*",
@@ -47,7 +47,7 @@
       "concat", "cond", "cond->", "cond->>", "condp", "conj", "conj!", "cons",
       "constantly", "construct-proxy", "contains?", "count", "counted?",
       "create-ns", "create-struct", "cycle", "dec", "dec'", "decimal?",
-      "declare", "or?", "some?", "unit?", "something?", "#'",
+      "declare", "or?", "some?", "unit?", "nothing?", "#'",
       "defmacro", "defmethod", "defmulti", "defn", "defn!", "defn-", "defn!-",
       "defprotocol", "defrecord", "defstruct", "deftype", "delay", "delay?",
       "deliver", "denominator", "deref", "derive", "descendants", "destructure",
@@ -69,9 +69,7 @@
       "hash-set", "hash-unordered-coll", "ident?", "identical?", "identity",
       "if-let", "if-not", "if-some", "ifn?", "import", "in-ns", "inc", "inc'",
       "indexed?", "init-proxy", "inst-ms", "inst-ms*", "inst?", "instance?",
-      "int", "int-array", "int?", "integer?", "interleave", "intern",
-      "interpose", "into", "into-array", "ints", "io!", "isa?", "iterate",
-      "iterator-seq", "juxt", "keep", "keep-indexed", "key", "keys", "keyword",
+      "int", "int-array", "int?", "keys", "keyword",
       "keyword?", "last", "lazy-cat", "lazy-seq", "let", "letfn", "line-seq",
       "list", "list*", "list?", "load", "load-file", "load-reader",
       "load-string", "loaded-libs", "locking", "long", "long-array", "longs",
@@ -161,7 +159,7 @@
     // simple-namespace := /^[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*/
     // simple-symbol    := /^(?:\/|[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*)/
     // qualified-symbol := (<simple-namespace>(<.><simple-namespace>)*</>)?<simple-symbol>
-    var qualifiedSymbol = /^(?:(?:[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*(?:\.[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*)*\/)?(?:\/|[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*)*(?=[\\\[\]\s"(),;@^`{}~]|$))/;
+    var qualifiedSymbol = /^(?:(?:[^\\\/\[\]\d\s"(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*(?:\.[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*)*\/)?(?:\/|[^\\\/\[\]\d\s"#'(),;@^`{}~][^\\\[\]\s"(),;@^`{}~]*)*(?=[\\\[\]\s"(),;@^`{}~]|$))/;
 
     var interpolating = false;
 

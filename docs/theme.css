@@ -54,13 +54,26 @@
   border-left: 1px solid white;
 } */
 
+.main-row {
+  height: calc(100vh - 3.5rem);
+}
+
 .main {
   font-size: 1.2em;
   line-height: 1.7;
 }
 
+.brand-logo {
+  max-height: 1.5em;
+}
+
 .main blockquote * {
   font-size: 1rem;
+}
+
+body {
+  position: relative;
+  margin-top: 3.5rem;
 }
 
 .main blockquote pre {

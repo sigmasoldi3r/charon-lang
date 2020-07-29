@@ -14,9 +14,9 @@
 
 <body>
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark site-navbar fixed-top">
     <a class="navbar-brand" href="http://sigmasoldi3r.github.io/charon-lang">
-      <img src="app-title-white.png" />
+      <img src="app-title-white.png" class="brand-logo" />
     </a>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
@@ -61,6 +61,26 @@
               <nav class="nav flex-column">
                 <a href="#FunctionPurity" class="nav-link" data-action="sidebar-nav">Function Purity</a>
               </nav>
+              <a href="#Strings" class="nav-link" data-action="sidebar-nav">Strings</a>
+              <a href="#Lists" class="nav-link" data-action="sidebar-nav">Lists</a>
+              <a href="#Tables" class="nav-link" data-action="sidebar-nav">Tables</a>
+              <a href="#Atoms" class="nav-link" data-action="sidebar-nav">Atoms</a>
+              <a href="#Objects" class="nav-link" data-action="sidebar-nav">Objects</a>
+              <a href="#Comments" class="nav-link" data-action="sidebar-nav">Comments</a>
+              <a href="#LexicalScoping" class="nav-link" data-action="sidebar-nav">Lexical Scoping</a>
+              <nav class="nav flex-column">
+                <a href="#LetBinding" class="nav-link" data-action="sidebar-nav">Let Binding</a>
+                <a href="#DefBinding" class="nav-link" data-action="sidebar-nav">Def Binding</a>
+              </nav>
+              <a href="#IfElseAndWhen" class="nav-link" data-action="sidebar-nav">If, else and when expressions</a>
+              <a href="#LoopsAndRecursion" class="nav-link" data-action="sidebar-nav">Loops and recursion</a>
+              <a href="#Operators" class="nav-link" data-action="sidebar-nav">Operators</a>
+              <a href="#ExistentialChecks" class="nav-link" data-action="sidebar-nav">Existential checks and null
+                coalescence</a>
+              <a href="#AccessIdiom" class="nav-link" data-action="sidebar-nav">Field access idiom</a>
+              <a href="#TryCatchThrow" class="nav-link" data-action="sidebar-nav">Try, catch and throw</a>
+              <a href="#Modules" class="nav-link" data-action="sidebar-nav">Modules</a>
+              <a href="#Resources" class="nav-link" data-action="sidebar-nav">Resources</a>
             </nav>
           </nav>
         </nav>
@@ -521,7 +541,13 @@ Charon string.
     "like me!"   19294
     1549         [1 2 3 4]
     :even-tables { :hi :o }
-    :symbols     :can-be-values-too})</textarea>
+    :symbols     :can-be-values-too})
+
+; Reading entries can be done in two ways:
+; This is the shortest, but only works for symbol keys
+(def some-val (:hello some-table))
+; Or, for other types of keys, you can use this
+(def some-other (table/get "like me!" some-table))</textarea>
             </div>
           </aside>
         </section>
@@ -530,6 +556,401 @@ Charon string.
         </p>
         <issue number="10"></issue>
 
+        <h3 id="Atoms">Atoms</h3>
+        <p>
+          Atoms are the <i>almost</i> only way of persisting a state in charon.
+          Other techniques that obscure data mutations to the program are
+          heavily discouraged.
+        </p>
+        <p>
+          An atom is an object that has a mutable state, that you can read and
+          write to.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="lists_editor-crn">; You define the atom once
+(def my-state (atom 0))
+; Then you change the state and read it, as many times as you want.
+(println! (atom/get my-state))
+(atom/reset! my-state 1)
+(println! (atom/get my-state))</textarea>
+          </div>
+        </aside>
+        <p>
+          All atom related functions, besides the atom creation itself, are
+          <strong>impure</strong>, because they involve hidden state
+          manipulation.
+        </p>
+        <p>
+          Also, atoms can contain any kind of datatype at any time.
+        </p>
+        <issue number="12"></issue>
+
+        <h3 id="Objects">Objects</h3>
+        <p>
+          As mentioned in the Table section, when we talk about <strong>Objects</strong>
+          in Charon, we refer to unbound datatypes, with no data methods.
+        </p>
+        <p>
+          <i>Note: There is a planned notion of object or "record" in Charon,
+            but the proposal is not stable yet.
+          </i>
+        </p>
+        <p>
+          To put it in plain: Objects are any Lua table that is not a known data
+          type, like Atoms, Lists or Tables. This exists in order to make the
+          program able to define foreign objects used by an external Lua API.
+          This also means that all object related functions are <strong>impure</strong>.
+        </p>
+        <issue number="13"></issue>
+
+        <h3 id="Comments">Comments</h3>
+        <p>
+          The only way to make a comment in Charon is by using the <code>;</code>
+          character. There are no multiline comments.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="comment_editor-crn">;;;
+; You've been seeing this all over the code!
+;;;
+(defn sum-me [a b]
+  (+ a b)) ; Just sum? Easy</textarea>
+          </div>
+        </aside>
+
+        <h3 id="LexicalScoping">Lexical Scoping</h3>
+        <p>
+          There are two ways of declare values: By <code>(let [] ...)</code> and
+          by <code>(def ...)</code>. The first binds a local value, while the
+          second a global (And exported) one.
+        </p>
+
+        <h4 id="LetBinding">Let Binding</h4>
+        <p>
+          The <strong>let</strong> expression binds to a local scope a set of
+          values passed to the binding array. The array always must contain
+          pairs of value-names and expressions representing those values.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="let1_editor-crn">; This is a local binding
+(let [one 1
+      two 2]
+  (println! "You can see here" one "&" two))
+; But outside of the let, one and two does not exist!</textarea>
+          </div>
+        </aside>
+        <p>
+          Let, also allows destructuring a <strong>List</strong> object, by
+          binding directly it's terms without having to write access by hand:
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="let2_editor-crn">; Here we can treat this list as a tuple:
+(def a-tupl [1 "green" :heavy])
+
+; Destructure by surrounding key names with [ ]
+(let [[a b c] a-tupl]
+  (println! "Elements of the tuple:" a b c))</textarea>
+          </div>
+        </aside>
+
+        <h4 id="DefBinding">Def Binding</h4>
+        <p>
+          Def bindings are also called <strong>global</strong> bindings,
+          although they do not declare the variable global for the runtime, they
+          are global in a module level.
+        </p>
+        <p>
+          Those are public (Or "Exported"), and importing modules can read them.
+          You cannot <strong>declare a global more than once</strong>, doing so
+          will result in an error.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="def_editor-crn">; This has being used all over the docs:
+(def my-global (atom 45))
+
+(defn plus-one []
+  (atom/apply! my-global + 1))</textarea>
+          </div>
+        </aside>
+
+        <h3 id="#IfElseAndWhen">If, else and when expressions</h3>
+        <p>
+          In Charon, an <i>if</i> condition is an <strong>expression</strong>.
+          This means that can be used for conditional assignment, as the result
+          of evaluating the <i>if</i> will be either branch.
+        </p>
+        <p>
+          Also the first expression of the <code>(if ...)</code> construct is
+          the <code>then</code> part, while the rest the <code>else</code>.
+          In the else branch, only the last expression will be returned,
+          although all are evaluated.
+        </p>
+        <p>
+          The syntax would be <code>(if boolean then-expr else-1 else-2 ... else-n)</code>.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="if_editor-crn">; If is also an expression here
+(def color (if valid :green :red))
+; This is roughly like typing 'color = valid ? "green" : "red";'
+
+; It can be used for traditional flow control
+(if wants-ketchup
+  (do
+    (prepare-ketchup)
+    (serve-ketchup))
+  (do
+    (prepare)
+    (serve)))</textarea>
+          </div>
+        </aside>
+        <p>
+          But aside from a simple if, you can make more complex branching
+          without nesting if expressions.
+        </p>
+        <p>
+          <code>when</code>, like <code>if</code> is also an expression, and
+          the same rules apply. The syntax is roughly
+          <code>(when value case-1 expr-1 ... case-n expr-n _ default-expr)</code>.
+        </p>
+        <p>
+          Note that all cases come in pairs. The else or default case in a when
+          expression is noted with the <code>_</code> symbol.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="when_editor-crn">; When is similar to a switch-case:
+(when color
+  :red   (println! "Is red!!")
+  :green (println! "Ah... the green of the mountains")
+  _      (println! "What...?"))
+
+; But when can be used for more complex pattern matching
+; Take a tuple like:
+(def tpl [1 "a" :b])
+; You can use pattern matching like:
+(when tpl
+  [5 "a"] (println! "Five and A...")
+  [_ "a"] (println! "In case you wonder... was A only")
+  [_ "b"] (println! "Only B matters")
+  _         (println! "Who knows..."))</textarea>
+          </div>
+        </aside>
+
+        <h3 id="LoopsAndRecursion">Loops and recursion</h3>
+        <p>
+          In Charon, we assume that you eventually will need some looping for
+          side effects. That's because a <code>for</code> expression does not
+          return anything, so the only way you really want to use this is for
+          side effects, which include our beloved <code>println!</code> function.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="loop1_editor-crn">; For loops here act similar to Lua's for
+; This would be the classic example of a for that goes from 1 to 100.
+(for [i (range 1 100)]
+  (println! "i = " i))
+
+; But you can use any sequence-like object:
+(for [n [1 2 3 4]] (println! "n = " n))
+
+; Even in pairs!
+(for [value key {:a 1 :b 2 :c 3}]
+  (println! key " => " value))</textarea>
+          </div>
+        </aside>
+        <p>
+          <i>
+            The subject of adding a while loop is being discussed in the issue
+            <a href="https://github.com/sigmasoldi3r/charon-lang/issues/15">#15</a>
+            .
+          </i>
+        </p>
+        <p>
+          Other means of more pure looping is the recursion. You could just
+          write a tail-recursive function by calling the same function over
+          again.
+        </p>
+        <p>
+          This sadly does not work easy with anonymous functions, but for that
+          comes the self-recursion trait in to rescue, with <code>#'</code>.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="loop1_editor-crn">; Example of self-recursion:
+(defn fib [n a b]
+  (if (= n 0) a
+    (if (= n 1) b
+      (#' (- n 1) b (+ a b)))))</textarea>
+          </div>
+        </aside>
+        <p>
+          We claim that the use of <code>for</code> loops is tightly related
+          with side effects because it cannot produce any result without them.
+        </p>
+        <p>
+          For looping procedures that can produce pure results, use methods like
+          <code>list/map</code> or <code>list/reduce</code>.
+        </p>
+
+        <h3 id="Operators">Operators</h3>
+        <p>
+          Charon has an equivalent for most binary operatos, which include the
+          typical arithmetic operators like <code>+</code>, <code>-</code>,
+          <code>*</code> and <code>/</code>, plus power operator <code>**</code>,
+          modulo <code>%</code> and integer division <code>//</code>.
+        </p>
+        <p>
+          Also boolean operators for <code>not</code> (Only accepts one
+          argument!), <code>and</code>, <code>or</code>, <code>xor</code>,
+          <code>nand</code> and <code>nor</code>.
+        </p>
+        <p>
+          Comparison can be done though <code>=</code>, <code>&lt;&gt;</code>
+          (not equal),
+          <code>&gt;</code>, <code>&lt;</code>, <code>&lt;=</code> and
+          <code>&gt;=</code>
+        </p>
+
+        <h3 id="#ExistentialChecks">Existential checks and null coalescence</h3>
+        <p>
+          In Charon you can pass non-boolean values to the <code>if</code>
+          expression, but that can not be used to check for existent or not
+          existent values, as <code>unit</code> will translate to
+          <code>true</code> but <code>nothing</code> to false.
+        </p>
+        <p>
+          To check if a value is neither <code>unit</code> or <code>nothing</code>
+          you check with the function <code>(some? ...)</code>. If for some
+          reason you need to distinguish between <strong>unit and nothing</strong>,
+          you can do so with <code>(nothing? ...)</code> and <code>(unit? ...)</code>
+          functions.
+        </p>
+        <p>
+          Aside, you can use the <code>(or? value? default)</code> function
+          which takes a value, and returns it if was something, or returns the
+          second argument if was nothing or unit. This function is also known
+          as the coalesce operator.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="exists_editor-crn">; Existential checks for possibly unit values
+(if (some? input)
+  (println! "Input is " input)
+  (println! "Please, provide imput!"))
+
+; Checks with maps
+(def m {:a unit :b 5})
+
+; some? returns false on both :a and :c
+(assert
+  (=
+    (some? (:a m))
+    (some? (:c m))))
+
+; But you can differentiate an existing entry with no value
+; from one that does not exist:
+(assert (nothing? (:c m)))
+(assert (unit? (:a m)))
+
+; In case of no value (For either reason)
+(def i-am-surely-something
+  (or? (:a m) 0))
+(def me-too
+  (or? (:c m) 0))</textarea>
+          </div>
+        </aside>
+
+        <h3 href="#AccessIdiom">Field access idiom</h3>
+        <p>
+          Sometimes, you need to manipulate external Lua objects, like in case
+          of native or 3rd party libraries. For those cases, chaining
+          function binding and <code>object/get</code> calls gets really tedious
+          quickly.
+        </p>
+        <p>
+          For that reason, there is a special form that uses the <code>::</code>
+          and <code>:</code> symbols as infix operators in names.
+        </p>
+        <p>
+          The difference between those two, is that the first <code>::</code> is
+          what we call an unbound access, which in case of a field, is just a
+          reference. But in case of function calls, the function is called
+          statically.
+        </p>
+        <p>
+          The second, <code>:</code>, is used only in bound function calls, when
+          we need to pass the <code>self</code> argument implicitly. Attempting
+          to use this for referncing a field will result in a syntax error.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="access_editor-crn">; Object access in case of foreign objects
+(my::nested::object::func "yes")
+(player::weapon:reload 50) ; Note the last ":"
+(println! player::weapon::ammo)</textarea>
+          </div>
+        </aside>
+
+        <h3 href="#TryCatchThrow">Try, catch and throw</h3>
+        <p>
+          Error handling in Charon uses the <strong>try-catch</strong>
+          structure. However, catching is untyped an you might only have one
+          <code>catch</code> per try. <code>throw</code> can throw any value and
+          it will be handled by the nearest <code>try</code>.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="trycatch_editor-crn">; Classic try-catch
+(defn error-prone
+  (throw "Indeed"))
+
+(try (error-prone)
+  (catch [err]
+    (println! "Error found:" err)))</textarea>
+          </div>
+        </aside>
+
+        <h3 id="Modules">Modules</h3>
+        <p>
+          Charon has a notion of modules, where each file represents one.
+          Modules declare public fields that can be reused in other modules,
+          via <code>import</code> or <code>module</code> declaration.
+        </p>
+        <p>
+          Wether you need to declare the module name explicitly or not depends
+          on your project needs, take in mind that charon uses the file name
+          if no module name is provided explicitly. Although is recommended that
+          module and file name matches, sometimes you'll need to override that.
+        </p>
+        <aside class="code-example container-fluid">
+          <div class="row">
+            <textarea class="col-sm-12 editor-panel" id="modules_editor-crn">; Modules can be optionally named with:
+(module my_module
+  [:import lib :from "lib"]) ; This is also optional
+
+; If you don't have explicit module name you can use:
+(import lib :from "lib")</textarea>
+          </div>
+        </aside>
+
+        <h3 id="Resources">Resources</h3>
+        <ul>
+          <li>
+            <a href="https://github.com/sigmasoldi3r/charon-lang">
+              Charon on Github
+            </a>
+          </li>
+          <li>
+            <a href="https://discord.gg/GuRqctF">
+              Charon on Discord
+            </a>
+          </li>
+        </ul>
 
       </main>
 

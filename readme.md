@@ -10,7 +10,7 @@
   <a aria-label="Release Badge" href="https://github.com/sigmasoldi3r/charon-lang/releases">
     <img alt="Release Badge" src="https://img.shields.io/github/v/release/sigmasoldi3r/charon-lang?include_prereleases&style=for-the-badge">
   </a>
-  <a aria-label="Discord Badge" href="">
+  <a aria-label="Discord Badge" href="https://discord.gg/GuRqctF">
     <img alt="Discord Badge" src="https://img.shields.io/discord/736229755677835305?style=for-the-badge&logo=discord&logoColor=white">
   </a>
 </p>
@@ -27,6 +27,8 @@ the pure functions and the impure ones.
 ; Hello world
 (println! "Hello World!")
 ```
+
+You can find the documentation on [Github Pages](https://sigmasoldi3r.github.io/charon-lang).
 
 ## Binaries
 
@@ -295,7 +297,7 @@ To get the type of value you can use the `type` function:
 (when (type val)
   :list "Yey a list"
   :table "Oh, the table."
-  # (throw (str "What is a " (type val) "?")))
+  _ (throw (str "What is a " (type val) "?")))
 ```
 
 Types returned are:
@@ -307,11 +309,12 @@ Types returned are:
   :list    ; For Charon list collection.
   :table   ; For Charon table collection.
   :object  ; Any unknown object, from Lua context or by using (object/new ...)
+  :unit    ; The null type
+  :nothing ; For non-existing values like non-existing table entries
 }
 ```
 
 You can assert them or use in a when clause.
-
 
 ## Code Samples
 
