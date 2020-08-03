@@ -297,6 +297,46 @@ export const stdlib = {
       name: 'charon.in_args'
       , kind: DataKind.FUNC
     }),
+  'string?':
+    _({
+      name: 'charon.is_string'
+      , kind: DataKind.FUNC
+    }),
+  'number?':
+    _({
+      name: 'charon.is_number'
+      , kind: DataKind.FUNC
+    }),
+  'boolean?':
+    _({
+      name: 'charon.is_boolean'
+      , kind: DataKind.FUNC
+    }),
+  'list?':
+    _({
+      name: 'charon.is_list'
+      , kind: DataKind.FUNC
+    }),
+  'table?':
+    _({
+      name: 'charon.is_table'
+      , kind: DataKind.FUNC
+    }),
+  'symbol?':
+    _({
+      name: 'charon.is_symbol'
+      , kind: DataKind.FUNC
+    }),
+  'atom?':
+    _({
+      name: 'charon.is_atom'
+      , kind: DataKind.FUNC
+    }),
+  'object?':
+    _({
+      name: 'charon.is_object'
+      , kind: DataKind.FUNC
+    }),
   'unit?':
     _({
       name: 'charon.is_unit'

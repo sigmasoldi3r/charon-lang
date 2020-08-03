@@ -28,8 +28,26 @@ local charon = {}
 
 local function strcat(this, other) return tostring(this) .. other; end
 
+-- Decoding function.
+local function decode_crd_string(str)
+
+end
+
+--[[
+  This function decodes a CRD file on runtime.
+]]
+function charon.decode_crd(file_or_string)
+  if type(file_or_string) == 'string' then
+
+  elseif type(file_or_string) == 'table' then
+
+  else
+    error 'Wrong data type passed to decoder.';
+  end
+end
+
 -- Unit type
-charon.Unit = setmetatable({}, {
+local Unit = setmetatable({}, {
   __tostring = function() return 'Unit'; end,
   __concat = strcat,
   __call = function() error 'Attempting to call unit value!'; end
@@ -37,91 +55,21 @@ charon.Unit = setmetatable({}, {
 charon.True = true
 charon.False = false
 
+-- Charon symbol type, like :hello or :world
 local Symbol = {
   __tostring = function(self) return ':' .. self.value; end,
   __concat = strcat,
-  __call = function(self) error 'Attempting to call symbol ' .. self .. '!'; end
+  __call = function(self) error('Attempting to call symbol ' .. self .. '!'); end
 };
 local symbols = {};
-
-function charon.symbol(value)
-  if symbols[value] ~= nil then return symbols[value]; end
-  local symbol = setmetatable({ value = value }, Symbol);
-  symbols[value] = symbol;
-  return symbol;
-end
-
-function charon.type(value)
-  if value == charon.Unit then
-    return charon.symbol'unit';
-  end
-  local type = type(value);
-  if type == 'number' then
-    return charon.symbol'number';
-  elseif type == 'string' then
-    return charon.symbol'string';
-  elseif type == 'table' then
-    local meta = getmetatable(value);
-    if meta == List then
-      return charon.symbol'list';
-    elseif meta == Table then
-      return charon.symbol'table';
-    elseif meta == Symbol then
-      return charon.symbol'symbol';
-    elseif meta == Atom then
-      return charon.symbol'atom';
-    else
-      return charon.symbol'object';
-    end
-  else
-    return charon.symbol'nothing';
-  end
-end
-
-function charon.is(value, symbol)
-  return charon.type(value) == symbol;
-end
-
-function charon.some(value)
-  return value ~= nil and value ~= charon.Unit;
-end
-
-function charon.in_args(value, ...)
-  for _, v in pairs{...} do
-    if value == v then
-      return true;
-    end
-  end
-  return false;
-end
-
-function charon.is_nothing(value)
-  return value == nil;
-end
-
-function charon.is_unit(value)
-  return value == charon.Unit;
-end
-
-function charon.isnt_nothing(value)
-  return value ~= nil;
-end
-
-function charon.isnt_unit(value)
-  return value ~= charon.Unit;
-end
 
 local Atom = {
   __tostring = function(self)
     return 'atom{' .. tostring(self.value) .. '}';
   end,
   __concat = strcat,
-  __call = function(self) error 'Attempting to call atom ' .. self .. '!'; end
+  __call = function(self) error('Attempting to call atom ' .. self .. '!'); end
 }
-
-function charon.atom(value)
-  return setmetatable({ value = value }, Atom);
-end
 
 local List = {
   __tostring = function(self)
@@ -143,8 +91,142 @@ local List = {
     return self == b;
   end,
   __concat = strcat,
-  __call = function(self) error 'Attempting to call list ' .. self .. '!'; end
+  __call = function(self) error('Attempting to call list ' .. self .. '!'); end
 }
+
+local Table = {
+  __tostring = function(self)
+    local paired = '';
+    for k, v in pairs(self) do
+      paired = paired .. tostring(k) .. ' ' .. tostring(v) .. ' ';
+    end
+    return '{ ' .. paired .. '}';
+  end,
+  __concat = strcat,
+  __call = function(self) error('Attempting to call table ' .. self .. '!'); end
+}
+
+-- Symbol constructor.
+function charon.symbol(value)
+  if symbols[value] ~= nil then return symbols[value]; end
+  local symbol = setmetatable({ value = value }, Symbol);
+  symbols[value] = symbol;
+  return symbol;
+end
+
+--[[
+  Type function.
+  Returns a type annotation tag, which can be used for runtime checks.
+]]
+function charon.type(value)
+  if value == Unit then
+    return charon.symbol'unit';
+  end
+  local type = type(value);
+  if type == 'number' then
+    return charon.symbol'number';
+  elseif type == 'string' then
+    return charon.symbol'string';
+  elseif type == 'boolean' then
+    return charon.symbol'boolean';
+  elseif type == 'table' then
+    local meta = getmetatable(value);
+    if meta == List then
+      return charon.symbol'list';
+    elseif meta == Table then
+      return charon.symbol'table';
+    elseif meta == Symbol then
+      return charon.symbol'symbol';
+    elseif meta == Atom then
+      return charon.symbol'atom';
+    elseif meta == Unit then
+      return charon.symbol'unit';
+    else
+      return charon.symbol'object';
+    end
+  elseif type == 'nil' then
+    return charon.symbol'nothing';
+  else
+    error'Unexpected type found.';
+  end
+end
+
+-- True if value was of type string.
+function charon.is_string(value)
+  return charon.type(value) == charon.symbol'string';
+end
+
+-- True if value was of type number.
+function charon.is_number(value)
+  return charon.type(value) == charon.symbol'number';
+end
+
+-- True if value was of type boolean.
+function charon.is_boolean(value)
+  return charon.type(value) == charon.symbol'boolean';
+end
+
+-- True if value was of type list.
+function charon.is_list(value)
+  return charon.type(value) == charon.symbol'list';
+end
+
+-- True if value was of type table.
+function charon.is_table(value)
+  return charon.type(value) == charon.symbol'table';
+end
+
+-- True if value was of type symbol.
+function charon.is_symbol(value)
+  return charon.type(value) == charon.symbol'symbol';
+end
+
+-- True if value was of type atom.
+function charon.is_atom(value)
+  return charon.type(value) == charon.symbol'atom';
+end
+
+-- True if value was of type object.
+function charon.is_object(value)
+  return charon.type(value) == charon.symbol'object';
+end
+
+function charon.is(value, symbol)
+  return charon.type(value) == symbol;
+end
+
+function charon.some(value)
+  return value ~= nil and value ~= Unit;
+end
+
+function charon.in_args(value, ...)
+  for _, v in pairs{...} do
+    if value == v then
+      return true;
+    end
+  end
+  return false;
+end
+
+function charon.is_nothing(value)
+  return value == nil;
+end
+
+function charon.is_unit(value)
+  return value == Unit;
+end
+
+function charon.isnt_nothing(value)
+  return value ~= nil;
+end
+
+function charon.isnt_unit(value)
+  return value ~= Unit;
+end
+
+function charon.atom(value)
+  return setmetatable({ value = value }, Atom);
+end
 
 function charon.list(tbl)
   return setmetatable(tbl, List)
@@ -159,7 +241,7 @@ function charon.list_find(tbl, what, finder)
       return v;
     end
   end
-  return charon.Unit;
+  return Unit;
 end
 
 function charon.list_has(tbl, element, finder)
@@ -176,7 +258,7 @@ function charon.list_get(key, tbl)
   assert(getmetatable(tbl) == List, "list/get only accepts lists.");
   assert(type(key) == 'number', "list/get key can only be numeric.");
   local field = tbl[key];
-  if field == nil then return charon.Unit; end
+  if field == nil then return Unit; end
   return field;
 end
 
@@ -295,56 +377,11 @@ function charon.list_each(tbl, consumer)
   for k, v in pairs(tbl) do
     consumer(v, k);
   end
-  return charon.Unit;
+  return Unit;
 end
-
-local Table = {
-  __tostring = function(self)
-    local paired = '';
-    for k, v in pairs(self) do
-      paired = paired .. tostring(k) .. ' ' .. tostring(v) .. ' ';
-    end
-    return '{ ' .. paired .. '}';
-  end,
-  __concat = strcat,
-  __call = function(self) error 'Attempting to call table ' .. self .. '!'; end
-}
 
 function charon.table(tbl)
   return setmetatable(tbl, Table)
-end
-
-function charon.println(...)
-  print(...);
-end
-
-function charon.print(...)
-  for _, v in pairs{...} do
-    io.write(v);
-  end
-end
-
-function charon.atom_get(atom)
-  assert(getmetatable(atom) == Atom, "atom/get only accepts atoms.")
-  return atom.value;
-end
-
-function charon.atom_set(atom, value)
-  assert(getmetatable(atom) == Atom, "atom/reset! only accepts atoms.")
-  atom.value = value;
-  return charon.Unit;
-end
-
-function charon.atom_apply(atom, func, ...)
-  atom.value = func(atom.value, ...);
-  return atom.value;
-end
-
-function charon.table_get(key, tbl)
-  assert(getmetatable(tbl) == Table, "table/get only accepts tables.");
-  local field = tbl[key];
-  if field == nil then return charon.Unit; end
-  return field;
 end
 
 function charon.table_merge(left, right)
@@ -373,6 +410,39 @@ function charon.table_remove(tbl, ...)
     end
   end
   return out;
+end
+
+function charon.println(...)
+  print(...);
+end
+
+function charon.print(...)
+  for _, v in pairs{...} do
+    io.write(v);
+  end
+end
+
+function charon.atom_get(atom)
+  assert(getmetatable(atom) == Atom, "atom/get only accepts atoms.")
+  return atom.value;
+end
+
+function charon.atom_set(atom, value)
+  assert(getmetatable(atom) == Atom, "atom/reset! only accepts atoms.")
+  atom.value = value;
+  return Unit;
+end
+
+function charon.atom_apply(atom, func, ...)
+  atom.value = func(atom.value, ...);
+  return atom.value;
+end
+
+function charon.table_get(key, tbl)
+  assert(getmetatable(tbl) == Table, "table/get only accepts tables.");
+  local field = tbl[key];
+  if field == nil then return Unit; end
+  return field;
 end
 
 function charon.object_new_raw(proto)
@@ -405,9 +475,9 @@ end
 
 function charon.object_get(object, key)
   assert(object ~= nil, "Cannot get '" .. tostring(key) .. "' from nothing!");
-  assert(object ~= charon.Unit, "Cannot get '" .. tostring(key) .. "' from unit!");
+  assert(object ~= Unit, "Cannot get '" .. tostring(key) .. "' from unit!");
   local field = object[key];
-  if field == nil then return charon.Unit; end
+  if field == nil then return Unit; end
   return field;
 end
 
@@ -426,35 +496,35 @@ function charon.object_set(object, key, value)
 end
 
 function charon.call(fn, ...)
-  assert(fn ~= charon.Unit, 'Unit is not callable!');
+  assert(fn ~= Unit, 'Unit is not callable!');
   return fn(...);
 end
 
 function charon.apply(fn, args)
-  assert(fn ~= charon.Unit, 'Unit is not callable!');
+  assert(fn ~= Unit, 'Unit is not callable!');
   return fn(table.unpack(args));
 end
 
 function charon.opaque_call(fn)
-  if fn == charon.Unit then
+  if fn == Unit then
     error('Unit is not callable!');
   end
   fn();
-  return charon.Unit;
+  return Unit;
 end
 
 function charon.file_open(file, mode)
-  return io.open(file, mode) or charon.Unit;
+  return io.open(file, mode) or Unit;
 end
 
 function charon.file_close(file)
   io.close(file);
-  return charon.Unit;
+  return Unit;
 end
 
 function charon.file_write(file, what)
   file:write(what);
-  return charon.Unit;
+  return Unit;
 end
 
 function charon.file_read(file)
@@ -468,7 +538,7 @@ function charon.compose(a, b)
 end
 
 function charon.or_coalesce(test, val)
-  if test == nil or test == charon.Unit then
+  if test == nil or test == Unit then
     return val;
   end
   return test;
