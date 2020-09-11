@@ -64,12 +64,13 @@ List
   }
 
 Table
-  = LBRACE _ values:(e:Term _ { return e })* RBRACE
+  = escaped:'\''? LBRACE _ values:(e:Term _ { return e })* RBRACE
   {
     return {
       _location: location(),
       type: 'Table',
-      values
+      values,
+      escaped: !!escaped
     }
   }
 

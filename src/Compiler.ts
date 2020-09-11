@@ -276,8 +276,7 @@ Please do not hesitate to provide additional steps for reproduction.
     if (!ast.isList(first)) throw 'First should be a binding array!';
     const $ = new Compiler(this, this.pureContext, this.options);
     const bind = $.genLetLocalBind(first);
-    return `(function(${$.closure}) ${bind}; ${
-      $.termListLastReturns(invoke.args.slice(1))} end)(${$.closure})`
+    return `(function(${$.closure}) ${bind}; ${$.termListLastReturns(invoke.args.slice(1))} end)(${$.closure})`
   }
 
   private readonly macros = new Map<string, MacroFn>();
@@ -580,8 +579,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    */
   private genBOP(invoke: ast.Invoke, modus: string, args: ast.Term[]): string {
     if (args.length <= 1) {
-      throw new SyntaxError(`Operator ${
-        modus
+      throw new SyntaxError(`Operator ${modus
         } needs at least two arguments!`, invoke._location);
     }
     const mapReduceArgs = (joiner: string) => {
@@ -630,10 +628,8 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
           return `(${args.join('^')})`;
         }
       default:
-        throw new CharonError(`Unknown binary-like operator "${
-          modus
-          }" passed. This is likely a bug in the parser, please issue a bug ${
-          this.bug(
+        throw new CharonError(`Unknown binary-like operator "${modus
+          }" passed. This is likely a bug in the parser, please issue a bug ${this.bug(
             'unexpected binary-like operator',
             'genBOP/switch',
             invoke._location
@@ -679,8 +675,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       body = `for _, ${this.genTerm(v)} in pairs(${this.genTerm(iterable)}) do ${terms} end`;
     }
     if (body == null) {
-      throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report the issue here ${
-        this.bug('the code generator', 'for inliner', invoke._location)
+      throw new CharonError(`Unexpected error while generating for loop code, the inline might have failed due to a false positive. This is likely a bug in the code generator, please report the issue here ${this.bug('the code generator', 'for inliner', invoke._location)
         }.`, invoke._location);
     }
     return `(function(${this.closure}) ${body} end)(${this.closure})`;
@@ -766,8 +761,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       const args = invoke.args.map(this.genTerm.bind(this));
       return `${target}(${args.join()})`;
     }
-    throw new CharonError(`Attempting to generate a function call outside the boundaries of a valid target. ${
-      this.bug('the code generator', 'generate call expression', invoke._location)}`, invoke._location);
+    throw new CharonError(`Attempting to generate a function call outside the boundaries of a valid target. ${this.bug('the code generator', 'generate call expression', invoke._location)}`, invoke._location);
   }
 
   /**
@@ -783,14 +777,12 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    */
   private tryFallbackMacro(term: ast.Term): string {
     if (!ast.isName(term)) {
-      throw new CharonError(`Invalid use of fallback macro checker. This likely indicates a bug in the code generator, please issue this bug at ${
-        this.bug('the code generator', 'fallback macro generation', term._location)}`);
+      throw new CharonError(`Invalid use of fallback macro checker. This likely indicates a bug in the code generator, please issue this bug at ${this.bug('the code generator', 'fallback macro generation', term._location)}`);
     }
     const ref = this.get(term.value);
     const value = ref?.fallbackRef;
     if (value == null) {
-      throw new CharonError(`Invalid use of fallback macro checker: No name found in the registry, or fallback not defined. Please issue this bug at ${
-        this.bug('the code generator', 'fallback macro generation', term._location)}`);
+      throw new CharonError(`Invalid use of fallback macro checker: No name found in the registry, or fallback not defined. Please issue this bug at ${this.bug('the code generator', 'fallback macro generation', term._location)}`);
     }
     return value;
   }
@@ -964,12 +956,22 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
 
   /**
    * Generates the code of a table literal.
+   * If the literal comes with a ' like '{:hi "you"}, symbols will be translated
+   * into plain lua keys (AKA strings).
    * @param table
    */
   private genTable(table: ast.Table): string {
     const pairs: string[] = [];
     for (let i = 0; i < table.values.length; i += 2) {
-      const l = this.genTerm(table.values[i]);
+      let l: string
+      {
+        const first = table.values[i]
+        if (table.escaped && first.type == 'Token' && first.name == 'SYMBOL') {
+          l = '"' + this.genTerm({ type: 'Token', name: 'STRING', value: first.value } as any) + '"';
+        } else {
+          l = this.genTerm(first);
+        }
+      }
       const r = this.genTerm(table.values[i + 1] ?? { type: 'Token', name: 'NAME', value: 'unit' });
       pairs.push(`[${l}] = ${r}`);
     }

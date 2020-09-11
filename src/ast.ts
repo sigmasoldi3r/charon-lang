@@ -45,7 +45,7 @@ export function isWildcard(term: Term): term is WILDCARD {
 
 export function isLiteral(term: Term): term is Literal {
   return term.type === 'Token' &&
-      (  term.name === 'NUMBER'
+    (term.name === 'NUMBER'
       || term.name === 'STRING'
       || term.name === 'SYMBOL');
 }
@@ -69,7 +69,7 @@ export function isString(term: Term): term is STRING {
 export type CodeLocation =
   {
     start: { offset: number, line: number, column: number };
-    end:   { offset: number, line: number, column: number };
+    end: { offset: number, line: number, column: number };
   }
 
 export type LocatedCode =
@@ -124,6 +124,7 @@ export type Table =
   {
     type: 'Table';
     values: Term[];
+    escaped: boolean;
   } & LocatedCode
 
 export type Literal
