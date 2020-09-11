@@ -127,9 +127,10 @@
         </section>
         <section id="Overview">
           <h2>Overview</h2>
-          <p>
+          <!-- Not true anymore. -->
+          <!-- <p>
             Charon on the left, and the Lua result on the right.
-          </p>
+          </p> -->
           <em>
             Currently, the produced code is ugly and spans less lines. This will
             change in future releases.
@@ -453,8 +454,12 @@ Charon string.
 -- Charon docs")</textarea>
             </div>
           </aside>
+          <p style="color: darkred;">
+            This is a proposed model, the language does not support interpolation
+            yet.
+          </p>
           <p>
-            Also, strings support new lines, and interpolation by using the
+            Also, strings <b>will</b> support new lines, and interpolation by using the
             dollar symbol <code>$var-name</code> or
             <code>$(some "expression")</code>.
           </p>

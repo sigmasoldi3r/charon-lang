@@ -547,9 +547,9 @@ function charon.object_new(proto)
   for k, v in pairs(proto) do
     local key = k;
     if type(key) == 'table' and getmetatable(key) == Symbol then
-      key = tostring(key);
+      key = key.value;
     end
-    if type(v) == 'table' then
+    if type(v) == 'table' and getmetatable(v) == Table then
       tbl[key] = charon.object_new(v);
     else
       tbl[key] = v;
