@@ -367,6 +367,12 @@ export const stdlib = {
       name: 'charon.compose'
       , kind: DataKind.FUNC
     }),
+  // CRD and serialization
+  'crd/decode':
+    _({
+      name: 'charon.crd_decode'
+      , kind: DataKind.FUNC
+    }),
   // List
   'list/map':
     _({

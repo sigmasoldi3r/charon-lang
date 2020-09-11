@@ -26,25 +26,7 @@ SOFTWARE.
 ]]
 local charon = {}
 
-local function strcat(this, other) return tostring(this) .. other; end
-
--- Decoding function.
-local function decode_crd_string(str)
-
-end
-
---[[
-  This function decodes a CRD file on runtime.
-]]
-function charon.decode_crd(file_or_string)
-  if type(file_or_string) == 'string' then
-
-  elseif type(file_or_string) == 'table' then
-
-  else
-    error 'Wrong data type passed to decoder.';
-  end
-end
+------- Types References -------
 
 -- Unit type
 local Unit = setmetatable({}, {
@@ -94,6 +76,7 @@ local List = {
   __call = function(self) error('Attempting to call list ' .. self .. '!'); end
 }
 
+-- Table metatable
 local Table = {
   __tostring = function(self)
     local paired = '';
@@ -105,6 +88,108 @@ local Table = {
   __concat = strcat,
   __call = function(self) error('Attempting to call table ' .. self .. '!'); end
 }
+
+------- Runtime Functions -------
+
+local function strcat(this, other) return tostring(this) .. other; end
+
+-- Simple private streaming function.
+-- Future runtime versions will come with streaming APIs.
+local function stream_of(str)
+  local i = 1;
+  return {
+    next = function(self)
+      local poked = self:peek();
+      i = i + 1;
+      return poked;
+    end,
+    peek = function(self)
+      return str:sub(i, i);
+    end
+  };
+end
+
+local crd_parse_any;
+local function crd_parse_table(stream)
+  stream:next();
+  local data = charon.table{};
+  local odd = false;
+  local key = nil;
+  while stream:peek() ~= '}' do
+    if odd then
+      data[key] = crd_parse_any(stream);
+    else
+      key = crd_parse_any(stream);
+    end
+    odd = not odd;
+  end
+  return data;
+end
+
+local function crd_parse_list(stream)
+  stream:next();
+  local data = charon.list{};
+  while stream:peek() ~= ']' do
+    data[#data + 1] = crd_parse_any(stream);
+  end
+  return data;
+end
+
+local function crd_parse_string(stream)
+  stream:next();
+  local escaped = false;
+  local str = '';
+  while stream:peek() ~= '"' and not escaped do
+    local next = stream:next();
+    if next == '\\' then
+      escaped = true;
+    else
+      str = str .. next;
+    end
+  end
+  return str;
+end
+
+crd_parse_any = function(stream)
+  local token = stream:peek();
+  if token == '{' then
+    return crd_parse_table(stream);
+  elseif token == '[' then
+    return crd_parse_list(stream);
+  elseif token == '"' then
+    return crd_parse_string(stream);
+  elseif token:match('[\n \t\r]') then
+    stream:next();
+  elseif token == nil then
+    error('Unexpected end of input');
+  else
+    error('Unexpected token ' .. tostring(token));
+  end
+end
+
+--[[
+  This function decodes CRD data on runtime.
+]]
+function charon.crd_decode(str)
+  local stream = stream_of(str);
+  return crd_parse_any(stream);
+end
+
+--[[
+  This function decodes a CRD file on runtime.
+]]
+function charon.crd_decode_file(str)
+  assert(type(str) == 'string', 'Expected string, instead saw ' .. charon.type(str));
+  local file = io.open(str, 'r');
+  local data = nil;
+  if file ~= nil then
+    data = file:read('*all');
+    file:close();
+  else
+    return Unit;
+  end
+  return charon.decode_crd(data);
+end
 
 -- Symbol constructor.
 function charon.symbol(value)

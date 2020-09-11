@@ -1,0 +1,7 @@
+
+
+(let [f (file/open "samples/a.crd" "r")]
+  (println!
+    (crd/decode
+      (f:read "*all")))
+  (f:close))

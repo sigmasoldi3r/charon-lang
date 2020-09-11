@@ -1,0 +1,6 @@
+{ :name "Ahem"
+  :purpose "Example of Charon data file"
+  :used-by
+    [ "Charon project configuration"
+      "Data transmission"
+      "???"]}
