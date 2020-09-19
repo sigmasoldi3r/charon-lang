@@ -163,7 +163,9 @@ Note: All functions, methods and operators are being documented at
 [docs.md](docs.md), but still being written. This document is a simple
 introduction to the language and it's features.
 
-### String interpolation
+### String interpolation\*
+
+\*Note: Not currently implemented.
 
 Typically, to concatenate strings you would do:
 

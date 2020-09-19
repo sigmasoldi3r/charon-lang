@@ -322,13 +322,13 @@ Please do not hesitate to provide additional steps for reproduction.
     const { target: name, args } = invoke;
     const ref = this.getCheckedReference(name);
     switch (ref.name) {
-      case '#def':
-        return this.genDef(invoke, true);
-      case '#def-impure':
-        return this.genDef(invoke, false);
+      case '#defn':
+        return this.genDefn(invoke, true);
+      case '#defn!':
+        return this.genDefn(invoke, false);
       case '#let':
         return this.genLet(invoke);
-      case '#def-value': {
+      case '#def': {
         if (this.pureContext) {
           throw new PurityViolationError(`Value definition cannot be done from pure context.`, invoke._location);
         }
@@ -340,7 +340,7 @@ Please do not hesitate to provide additional steps for reproduction.
         const local = this.registerVar(name, DataKind.LOCAL, Scope.GLOBAL);
         return `${this.genScopedRef(local)} = ${this.genTerm(val)};`;
       }
-      case '#def-extern': {
+      case '#declare': {
         if (this.pureContext) {
           throw new PurityViolationError(`Extern definition cannot be done from pure context.`);
         }
@@ -899,7 +899,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    * @param invoke
    * @param pure
    */
-  private genDef(invoke: ast.Invoke, pure: boolean): string {
+  private genDefn(invoke: ast.Invoke, pure: boolean): string {
     if (this.pureContext) throw 'Cannot define new functions inside a pure context!';
     if (invoke.args.length < 2) throw 'Too few args!';
     const name = invoke.args[0];

@@ -30,17 +30,17 @@ import { dataPlace as _, DataKind } from './CompilerExtras';
 export const stdlib = {
   'defn':
     _({
-      name: '#def'
+      name: '#defn'
       , kind: DataKind.MACRO_FUNC
     }),
   'defn!':
     _({
-      name: '#def-impure'
+      name: '#defn!'
       , kind: DataKind.MACRO_FUNC
     }),
   'def':
     _({
-      name: '#def-value'
+      name: '#def'
       , kind: DataKind.MACRO_FUNC
     }),
   'defn-':
@@ -50,7 +50,7 @@ export const stdlib = {
     }),
   'defn!-':
     _({
-      name: '#def-impure-private'
+      name: '#defn!-private'
       , kind: DataKind.MACRO_FUNC
     }),
   'def-':
@@ -60,7 +60,7 @@ export const stdlib = {
     }),
   'declare':
     _({
-      name: '#def-extern'
+      name: '#declare'
       , kind: DataKind.MACRO_FUNC
     }),
   'let':
@@ -565,7 +565,7 @@ export const stdlib = {
     }),
   'string/find':
     _({
-      name: 'string.find'
+      name: 'charon.string_find'
       , kind: DataKind.FUNC
     }),
   'string/format':
@@ -595,7 +595,7 @@ export const stdlib = {
     }),
   'string/match':
     _({
-      name: 'string.match'
+      name: 'charon.string_match'
       , kind: DataKind.FUNC
     }),
   'string/rep':

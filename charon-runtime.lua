@@ -616,6 +616,22 @@ function charon.file_read(file)
   return file:read(what);
 end
 
+--[[
+  String find delegate, converts multireturn to Charon list, as multiple values
+  are not supported by Charon.
+]]
+function charon.string_find(str, ...)
+  return charon.list(str:find(...));
+end
+
+--[[
+  String match delegate, converts multireturn to Charon list, as multiple values
+  are not supported by Charon.
+]]
+function charon.string_match(str, ...)
+  return charon.list(str:match(...));
+end
+
 function charon.compose(a, b)
   return function(...)
     return b(a(...));
