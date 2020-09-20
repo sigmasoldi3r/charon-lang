@@ -485,6 +485,11 @@ export const stdlib = {
       name: 'charon.object_set'
       , kind: DataKind.IMPURE_FUNC
     }),
+  'object/set-raw':
+    _({
+      name: 'charon.object_set_raw'
+      , kind: DataKind.IMPURE_FUNC
+    }),
   'atom':
     _({
       name: 'charon.atom'

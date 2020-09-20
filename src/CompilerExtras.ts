@@ -95,7 +95,18 @@ export enum DataKind {
   MACRO_FUNC
 }
 export enum Scope {
+  /**
+   * A normal script-local scope.
+   */
   LOCAL,
+  /**
+   * Package level scope.
+   */
+  PACKAGE,
+
+  /**
+   * Cross-package, global shared scope (AKA _G in most cases).
+   */
   GLOBAL
 }
 

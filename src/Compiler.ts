@@ -337,7 +337,7 @@ Please do not hesitate to provide additional steps for reproduction.
           throw new SyntaxError(`def-value must start with a name!`, invoke._location);
         }
         const val = args[1];
-        const local = this.registerVar(name, DataKind.LOCAL, Scope.GLOBAL);
+        const local = this.registerVar(name, DataKind.LOCAL, Scope.PACKAGE);
         return `${this.genScopedRef(local)} = ${this.genTerm(val)};`;
       }
       case '#declare': {
@@ -839,7 +839,10 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    * @remarks After that, kind and scope should be set.
    * @param param0 NAME token.
    */
-  private dataKindFromName({ value: original }: ast.NAME): DataPlace {
+  private dataKindFromName({ value: original }: ast.NAME, preserveName: boolean = false): DataPlace {
+    if (preserveName) {
+      return dataPlace({ original, name: original });
+    }
     const name = '__val_' + createHash('md5')
       .update(original)
       .digest('hex')
@@ -855,13 +858,13 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    * @param kind
    * @param scope
    */
-  private registerVar(token: ast.NAME, kind: DataKind, scope: Scope = Scope.LOCAL) {
-    const data = this.dataKindFromName(token);
+  private registerVar(token: ast.NAME, kind: DataKind, scope: Scope = Scope.LOCAL, preserveName: boolean = false) {
+    const data = this.dataKindFromName(token, preserveName);
     data.kind = kind;
     data.scope = scope;
-    if (scope === Scope.GLOBAL) {
+    if (scope === Scope.PACKAGE) {
       const top = this.getTop(data.original);
-      if (top != null && top.scope === Scope.GLOBAL) {
+      if (top != null && top.scope === Scope.PACKAGE) {
         console.log(top);
         throw new TypeError(`Attempting to redeclare ${data.original}!`, token._location);
       }
@@ -877,8 +880,10 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    * @param data
    */
   private genScopedRef(data: DataPlace): string {
-    if (data.scope === Scope.GLOBAL) {
+    if (data.scope === Scope.PACKAGE) {
       return `${this.nsRef}["${data.original}"]`;
+    } else if (data.scope === Scope.GLOBAL) {
+      return `_G["${data.name}"]`;
     } else {
       return data.name;
     }
@@ -906,10 +911,18 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
     if (!ast.isName(name)) throw 'First arg should be a name!';
     const bind = invoke.args[1];
     if (!ast.isList(bind)) throw 'Missing binding vector!';
-    const local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.GLOBAL);
+    const firstSt = invoke.args[2];
+    let local: DataPlace;
+    if (ast.isSymbol(firstSt) && firstSt.value === 'global')
+    {
+      invoke.args.splice(2, 1);
+      local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.GLOBAL, true);
+    } else {
+      local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.PACKAGE);
+    }
     const $ = new Compiler(this, pure, this.options);
     const args = $.genBindingVector(bind);
-    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}) ${$.genDefBody(invoke)} end; return __self_ref__; end)()`;
+    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}) ${$.genDefnBody(invoke)} end; return __self_ref__; end)()`;
   }
 
   private readonly DEFS = {
@@ -948,7 +961,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
    * Generates the function definition body.
    * @param invoke
    */
-  private genDefBody(invoke: ast.Invoke): string {
+  private genDefnBody(invoke: ast.Invoke): string {
     const list = invoke.args.slice(2);
     if (list.length === 0) return `return charon.Unit;`;
     return this.termListLastReturns(list);
@@ -975,6 +988,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       const r = this.genTerm(table.values[i + 1] ?? { type: 'Token', name: 'NAME', value: 'unit' });
       pairs.push(`[${l}] = ${r}`);
     }
+    if (table.escaped) return `{ ${pairs.join()} }`;
     return `charon.table{ ${pairs.join()} }`;
   }
 

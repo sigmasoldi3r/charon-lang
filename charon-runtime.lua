@@ -566,17 +566,25 @@ function charon.object_get(object, key)
   return field;
 end
 
+function charon.object_set_raw(object, key, value)
+  object[key] = value
+end
+
 function charon.object_set(object, key, value)
   if getmetatable(key) == Table then
     for k, v in pairs(key) do
       if getmetatable(k) == Symbol then
-        object[k.value] = v
+        object[k.value] = v;
       else
-        object[k] = v
+        object[k] = v;
       end
     end
   else
-    object[key] = value;
+    if getmetatable(key) == Symbol then
+      object[key.value] = value;
+    else
+      object[key] = value;
+    end
   end
 end
 
