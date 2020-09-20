@@ -254,7 +254,7 @@ function my_object.static()
 end
 ```
 
-The easiest and the static (Fast in runtime) way of generating POJOs is:
+The easiest and the static (Fast in runtime) way of generating POLTs is:
 ```clj
 '{:this "way"}
 
