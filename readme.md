@@ -254,6 +254,17 @@ function my_object.static()
 end
 ```
 
+The easiest and the static (Fast in runtime) way of generating POJOs is:
+```clj
+'{:this "way"}
+
+; Eg: Like doing local some_loc = {plain = "object};
+(def some-loc '{:plain "object"})
+```
+
+The literal is just like the table literal but with a single quote `'{}` at the
+start.
+
 To interface it with Lua, you can import the object (Or declare extern if
 global):
 ```clj
