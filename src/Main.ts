@@ -26,6 +26,9 @@ SOFTWARE.
  */
 import { Compiler } from './Compiler';
 import * as yargs from 'yargs';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as cp from 'child_process';
 import { EntryPoint } from './exec';
 import { version } from '../package.json';
 import { writeFileSync, readFileSync } from 'fs';
@@ -81,6 +84,12 @@ export default class Main {
         alias: 's',
         describe: 'Makes all immediate closures variadic (if, do and such blocks).'
       })
+      .option('run', {
+        default: false,
+        type: 'boolean',
+        alias: 'u',
+        describe: 'Runs the script instead of compiling it.'
+      })
       // Options to be implemented:
       .option('type', {
         default: 'module',
@@ -112,6 +121,16 @@ export default class Main {
       console.error('No input file provided! use --help for usage.');
       return 1;
     }
+    if (args["run"]) {
+      if (args["output"]) {
+        console.warn('Output flag provided, but run being called. Ignoring it.');
+      }
+      const frag = crypto.createHash('md5')
+        .update(new Date().toString())
+        .digest()
+        .toString('hex');
+      args["output"] = `__tmpcharonrt${frag}__.lua`
+    }
     try {
       Compiler.compileFile(args._[0], args.output, {
         varargClosureBlocks: args["variadic-closures"],
@@ -120,6 +139,9 @@ export default class Main {
         noRuntimeRequire: args["no-runtime"],
         globalExport: args["global-export"]
       });
+      if (args["run"]) {
+        console.log(cp.execSync(`lua ${args["output"]}`).toString());
+      }
     } catch (err) {
       if (err instanceof CompileError) {
         console.error(err.message);
@@ -130,6 +152,10 @@ export default class Main {
         console.error(err);
       }
       return 2;
+    } finally {
+      if (args["run"] && args["output"]) {
+        fs.unlinkSync(args["output"]);
+      }
     }
     return 0;
   }
