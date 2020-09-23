@@ -444,6 +444,17 @@ export const stdlib = {
       name: 'charon.list_reduce_indexed'
       , kind: DataKind.FUNC
     }),
+  'list/join':
+    _({
+      name: 'charon.list_join'
+      , kind: DataKind.FUNC
+    }),
+  // Symbol
+  'symbol/value':
+    _({
+      name: 'charon.symbol_value'
+      , kind: DataKind.FUNC
+    }),
   // Table
   'table/get':
     _({
@@ -463,6 +474,21 @@ export const stdlib = {
   'table/merge':
     _({
       name: 'charon.table_merge'
+      , kind: DataKind.FUNC
+    }),
+  'table/map':
+    _({
+      name: 'charon.table_map'
+      , kind: DataKind.FUNC
+    }),
+  'table/empty?':
+    _({
+      name: 'charon.table_is_empty'
+      , kind: DataKind.FUNC
+    }),
+  'table/items':
+    _({
+      name: 'charon.table_items'
       , kind: DataKind.FUNC
     }),
   'object/new':
