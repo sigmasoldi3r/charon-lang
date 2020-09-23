@@ -124,6 +124,8 @@ Please do not hesitate to provide additional steps for reproduction.
    */
   public target: number;
 
+  private skipNextStatementSeparator: boolean = false;
+
   private constructor(
     private readonly upper: Optional<Compiler> = null,
     private readonly pureContext: boolean = upper?.pureContext ?? false,
@@ -217,7 +219,15 @@ Please do not hesitate to provide additional steps for reproduction.
   }
 
   private genProgram(program: ast.Program): string {
-    return program.program.map(this.genInvoke.bind(this)).join(';\n');
+    return program.program.map(invoke => {
+      let sep = ';';
+      const src = this.genInvoke(invoke);
+      if (this.skipNextStatementSeparator) {
+        sep = '';
+        this.skipNextStatementSeparator = false;
+      }
+      return src + sep;
+    }).join('\n');
   }
 
   /**
@@ -374,7 +384,8 @@ Please do not hesitate to provide additional steps for reproduction.
           this.set(data.original, data);
           return data;
         });
-        return `-- Extern symbol ${data.map(s => s.name).join()} :: ${meta.join()}`;
+        this.skipNextStatementSeparator = true;
+        return `--[[ Extern symbol ${data.map(s => s.name).join()} {${meta.join()}} ]]`;
       }
       case '#three-dots':
         return `charon.list{...}`;
@@ -564,7 +575,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       }
       const str = names.map(this.genTerm.bind(this));
       const bindDeclare = str.map(s => `local ${s};\n`).join('');
-      const bind = names.map(s => `${this.genTerm(s)} = __package["${s.value}"];`);
+      const bind = names.map(s => `${this.genTerm(s)} = __package["${s.value}"];`).join('');
       return `${bindDeclare}do local __package = require(${src}); ${bind} end`
     } else {
       throw new SyntaxError(`Unexpected ${targetOrBinder.type} found as first import argument. Expecting name or binding vector.`, targetOrBinder._location);
@@ -921,8 +932,35 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.PACKAGE);
     }
     const $ = new Compiler(this, pure, this.options);
-    const args = $.genBindingVector(bind);
-    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}) ${$.genDefnBody(invoke)} end; return __self_ref__; end)()`;
+    let vArgs: null | ast.NAME = null;
+    let shouldVArg = false
+    const naturalArgs: ast.List = { type: 'List', values: [], _location: bind._location };
+    for (const binder of bind.values) {
+      if (shouldVArg && vArgs === null && binder.type === 'Token' && binder.name === 'NAME') {
+        vArgs = binder;
+      } else if (shouldVArg) {
+        throw new SyntaxError(`Unexpected token after variadic binder. Only one name allowed after '&'.`, binder._location);
+      }
+      if (binder.type === 'Token' && binder.name === 'NAME' && binder.value === '&') {
+        shouldVArg = true;
+      }
+      if (!shouldVArg) {
+        naturalArgs.values.push(binder);
+      }
+    }
+    const args = $.genBindingVector(naturalArgs);
+    let vArgsCode = ''
+    let spread = ''
+    if (vArgs !== null) {
+      const data = $.registerVar(vArgs, DataKind.LOCAL, Scope.LOCAL);
+      vArgsCode = ` local ${data.name} = charon.list{...};`;
+      if (naturalArgs.values.length > 0) {
+        spread = ', ...'
+      } else {
+        spread = '...'
+      }
+    }
+    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}${spread})${vArgsCode} ${$.genDefnBody(invoke)} end; return __self_ref__; end)()`;
   }
 
   private readonly DEFS = {
@@ -943,18 +981,24 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
     const out = [];
     let i = 0;
     for (const item of terms) {
+      let eos = ';';
+      const term = this.genTerm(item);
+      if (this.skipNextStatementSeparator) {
+        this.skipNextStatementSeparator = false;
+        eos = '';
+      }
       if (i++ === last) {
         if (ast.isInvoke(item) && ast.isName(item.target) && item.target.value in this.DEFS) {
-          out.push(this.genTerm(item));
+          out.push(term + eos);
           out.push(`return charon.Unit;`);
         } else {
-          out.push(`return ${this.genTerm(item)};`)
+          out.push(`return ${term}${eos}`)
         }
       } else {
-        out.push(this.genTerm(item));
+        out.push(term + eos);
       }
     }
-    return out.join(';');
+    return out.join('');
   }
 
   /**
