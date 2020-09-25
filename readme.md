@@ -348,6 +348,7 @@ This contains some example projects.
 Name|Description|Related
 -|-|-
 [Pootis Explosion](https://github.com/sigmasoldi3r/charon-lang-gmod-addon-example)| A simple gmod addon to showcase the language|[Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/)
+[TinyHTML](https://github.com/sigmasoldi3r/tinyhtml)|A simple HTML document generator|
 
 Remember that functions are documented in [docs.md](docs.md) file.
 
