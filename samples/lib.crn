@@ -25,8 +25,8 @@
 ; Example of library!
 
 ; Such a classic:
-(def sum [a b]
+(defn sum [a b]
   (+ a b))
 
 ; Package-level constants:
-(def-value oh-man "Yes")
+(def oh-man "Yes")
