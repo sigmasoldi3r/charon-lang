@@ -1076,7 +1076,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
           case 'SYMBOL':
             return this.genSymbol(term);
           default:
-            return term.value;
+            return term.value.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         }
     }
   }
