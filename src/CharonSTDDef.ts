@@ -506,6 +506,11 @@ export const stdlib = {
       name: 'charon.object_get'
       , kind: DataKind.IMPURE_FUNC
     }),
+  'object/get-raw':
+    _({
+      name: 'charon.object_get_raw'
+      , kind: DataKind.IMPURE_FUNC
+    }),
   'object/set':
     _({
       name: 'charon.object_set'

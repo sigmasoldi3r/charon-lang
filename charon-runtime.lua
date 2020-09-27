@@ -604,9 +604,18 @@ end
 function charon.object_get(object, key)
   assert(object ~= nil, "Cannot get '" .. tostring(key) .. "' from nothing!");
   assert(object ~= Unit, "Cannot get '" .. tostring(key) .. "' from unit!");
-  local field = object[key];
+  local field;
+  if getmetatable(key).__name == 'Symbol' then
+    field = object[key.value];
+  else
+    field = object[key];
+  end
   if field == nil then return Unit; end
   return field;
+end
+
+function charon.object_get_raw(object, key)
+  return object[key]
 end
 
 function charon.object_set_raw(object, key, value)
