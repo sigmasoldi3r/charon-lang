@@ -26,15 +26,15 @@ SOFTWARE.
  * configuration objects for the compiler.
  */
 
-import { Optional } from './Optional';
-import * as ast from './ast';
-import { SyntaxError } from './errors';
+import { Optional } from "./Optional";
+import * as ast from "./ast";
+import { SyntaxError } from "./errors";
 
 /**
  * Contextual nested key-svalue storage.
  */
 export class Context<K, V> {
-  constructor(private parent: Optional<Context<K, V>> = null) { }
+  constructor(private parent: Optional<Context<K, V>> = null) {}
   private store = new Map<K, V>();
 
   /**
@@ -92,7 +92,7 @@ export enum DataKind {
   FUNC,
   IMPURE_FUNC,
   LOCAL,
-  MACRO_FUNC
+  MACRO_FUNC,
 }
 export enum Scope {
   /**
@@ -107,7 +107,7 @@ export enum Scope {
   /**
    * Cross-package, global shared scope (AKA _G in most cases).
    */
-  GLOBAL
+  GLOBAL,
 }
 
 export interface DataPlace {
@@ -118,10 +118,10 @@ export interface DataPlace {
   fallbackRef?: string;
 }
 export const DEFAULT_DATA_PLACE: DataPlace = {
-  name: '',
-  original: '',
+  name: "",
+  original: "",
   kind: DataKind.FUNC,
-  scope: Scope.LOCAL
+  scope: Scope.LOCAL,
 };
 
 export function dataPlace(init: Partial<DataPlace> = {}) {
@@ -135,9 +135,11 @@ export type MacroFn = (name: string, args: ast.Term[]) => string;
  * @param term
  */
 export function isCatch(term: ast.Term): boolean {
-  return term.type === 'Invoke'
-    && term.target.type === 'Token'
-    && term.target.value === 'catch';
+  return (
+    term.type === "Invoke" &&
+    term.target.type === "Token" &&
+    term.target.value === "catch"
+  );
 }
 
 export function not<A extends any[], R>(func: (...args: A) => R) {
@@ -223,9 +225,13 @@ export function thread(args: ast.Term[], applier: Applier): ast.Term {
   return receiver;
 }
 
-export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Applier): ast.List {
+export function threadParallel(
+  invoke: ast.Invoke,
+  args: ast.Term[],
+  applier: Applier
+): ast.List {
   const args0 = args[0];
-  const list = args.slice(1).map(term => {
+  const list = args.slice(1).map((term) => {
     if (!ast.isInvoke(term)) {
       throw new SyntaxError(
         `Only can thread (parallel) through function calls!`,
@@ -236,9 +242,9 @@ export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Ap
     return term;
   });
   return {
-    type: 'List',
+    type: "List",
     _location: invoke._location,
-    values: list
+    values: list,
   };
 }
 
@@ -251,7 +257,7 @@ export function threadParallel(invoke: ast.Invoke, args: ast.Term[], applier: Ap
  */
 export function r(str: TemplateStringsArray, target: string): string {
   const ch = str[0][0];
-  return [...target].map(_ => ch).join('');
+  return [...target].map((_) => ch).join("");
 }
 
 export function clamp(self: number, min: number, max: number) {
@@ -263,17 +269,21 @@ export function clamp(self: number, min: number, max: number) {
  * @param value
  * @param args
  */
-export function invoke(value: string, _location: ast.CodeLocation, ...args: ast.Term[]): ast.Invoke {
+export function invoke(
+  value: string,
+  _location: ast.CodeLocation,
+  ...args: ast.Term[]
+): ast.Invoke {
   return {
-    type: 'Invoke',
+    type: "Invoke",
     args,
     target: {
-      type: 'Token',
-      name: 'NAME',
+      type: "Token",
+      name: "NAME",
       value,
-      _location
+      _location,
     },
-    _location
+    _location,
   };
 }
 
@@ -285,26 +295,26 @@ function isLocated(object: any): object is ast.LocatedCode {
  * Generates the code mapping for each line.
  * @param location
  */
-export function codeMap(out: string, location: ast.CodeLocation | ast.LocatedCode) {
+export function codeMap(
+  out: string,
+  location: ast.CodeLocation | ast.LocatedCode
+) {
   const { start, end } = isLocated(location) ? location._location : location;
-  return `${out} -- ${start.line}:${start.column},${end.line}:${end.column}\n`
+  return `${out} -- ${start.line}:${start.column},${end.line}:${end.column}\n`;
 }
 
-export type MetaSpecifier
-  = 'pure'
-  | 'impure'
-  ;
+export type MetaSpecifier = "pure" | "impure";
 
 /**
  * Returns true if the term/string is a valid MetaSpecifier.
  * @param term
  */
 export function isMetaSpecifier(val: string): val is MetaSpecifier {
-  return val === 'pure' || val === 'impure';
+  return val === "pure" || val === "impure";
 }
 
 export interface CompileOptions {
-  mode: 'IIFE' | 'function-module' | 'module';
+  mode: "IIFE" | "function-module" | "module";
   varargIIFE: boolean;
   varargClosureBlocks: boolean;
   embedRuntime: boolean;
@@ -317,19 +327,19 @@ export interface CompileOptions {
  */
 export const presets = {
   cli: {
-    mode: 'module',
+    mode: "module",
     varargIIFE: false,
     varargClosureBlocks: true,
     embedRuntime: false,
     noRuntimeRequire: false,
-    globalExport: false
+    globalExport: false,
   } as CompileOptions,
   module: {
-    mode: 'module',
+    mode: "module",
     varargIIFE: false,
     varargClosureBlocks: false,
     embedRuntime: false,
     noRuntimeRequire: false,
-    globalExport: false
-  } as CompileOptions
+    globalExport: false,
+  } as CompileOptions,
 } as const;

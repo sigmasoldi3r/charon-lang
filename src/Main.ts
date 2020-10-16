@@ -24,21 +24,21 @@ SOFTWARE.
 /*
  * Charon compiler.
  */
-import { Compiler } from './Compiler';
-import * as yargs from 'yargs';
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as cp from 'child_process';
-import { EntryPoint } from './exec';
-import { version } from '../package.json';
-import { writeFileSync, readFileSync } from 'fs';
-import { CharonError, CompileError } from './errors';
+import { Compiler } from "./Compiler";
+import * as yargs from "yargs";
+import * as crypto from "crypto";
+import * as fs from "fs";
+import * as cp from "child_process";
+import { EntryPoint } from "./exec";
+import { version } from "../package.json";
+import { writeFileSync, readFileSync } from "fs";
+import { CharonError, CompileError } from "./errors";
 
 /**
  * Entry point class.
  */
 export default class Main {
-  private constructor() { }
+  private constructor() {}
 
   /**
    * App main.
@@ -47,95 +47,106 @@ export default class Main {
   @EntryPoint
   static main() {
     const args = yargs
-      .example('charon [file] [-o out/file.lua]', 'Compiles a single file.')
-      .option('output', {
-        alias: 'o',
+      .example("charon [file] [-o out/file.lua]", "Compiles a single file.")
+      .option("output", {
+        alias: "o",
         required: false,
-        type: 'string',
-        describe: 'Output file, optional.'
+        type: "string",
+        describe: "Output file, optional.",
       })
-      .option('embed-runtime', {
-        alias: 'e',
-        type: 'boolean',
+      .option("embed-runtime", {
+        alias: "e",
+        type: "boolean",
         default: false,
-        describe: 'Embeds the runtime instead of requiring it. Use for standalone environments.'
+        describe:
+          "Embeds the runtime instead of requiring it. Use for standalone environments.",
       })
-      .option('extract-runtime', {
-        alias: 'x',
-        type: 'boolean',
+      .option("extract-runtime", {
+        alias: "x",
+        type: "boolean",
         default: false,
-        describe: 'Extracts the runtime to make it available in your local environment.'
+        describe:
+          "Extracts the runtime to make it available in your local environment.",
       })
-      .option('global-export', {
-        alias: 'g',
+      .option("global-export", {
+        alias: "g",
         default: false,
-        type: 'boolean',
-        describe: 'Treats all exported modules as global symbols, including charon runtime.'
+        type: "boolean",
+        describe:
+          "Treats all exported modules as global symbols, including charon runtime.",
       })
-      .option('no-runtime', {
-        alias: 'n',
+      .option("no-runtime", {
+        alias: "n",
         default: false,
-        type: 'boolean',
-        describe: 'Makes compiled modules not require charon runtime explicitly.'
+        type: "boolean",
+        describe:
+          "Makes compiled modules not require charon runtime explicitly.",
       })
-      .option('variadic-closures', {
+      .option("variadic-closures", {
         default: false,
-        type: 'boolean',
-        alias: 's',
-        describe: 'Makes all immediate closures variadic (if, do and such blocks).'
+        type: "boolean",
+        alias: "s",
+        describe:
+          "Makes all immediate closures variadic (if, do and such blocks).",
       })
-      .option('run', {
+      .option("run", {
         default: false,
-        type: 'boolean',
-        alias: 'u',
-        describe: 'Runs the script instead of compiling it.'
+        type: "boolean",
+        alias: "u",
+        describe: "Runs the script instead of compiling it.",
       })
-      .option('debug', {
+      .option("debug", {
         default: false,
-        type: 'boolean',
-        alias: 'd',
-        describe: 'Runs the compiler in debug mode, tracing compiler\'s internal code if an error occurs.'
+        type: "boolean",
+        alias: "d",
+        describe:
+          "Runs the compiler in debug mode, tracing compiler's internal code if an error occurs.",
       })
       // Options to be implemented:
-      .option('type', {
-        default: 'module',
-        type: 'string',
-        alias: 't',
-        describe: 'Compilation mode, will tell how the file is produced. CURRENTLY SUPPORTS MODULE ONLY!'
+      .option("type", {
+        default: "module",
+        type: "string",
+        alias: "t",
+        describe:
+          "Compilation mode, will tell how the file is produced. CURRENTLY SUPPORTS MODULE ONLY!",
       })
-      .option('config', {
-        alias: 'c',
+      .option("config", {
+        alias: "c",
         required: false,
-        type: 'string',
-        describe: 'Configuration file for batch compile of projects. NOT USED CURRENTLY.'
+        type: "string",
+        describe:
+          "Configuration file for batch compile of projects. NOT USED CURRENTLY.",
       })
-      .version(version)
-      .argv;
+      .version(version).argv;
     if (args["extract-runtime"]) {
-      console.log('Extracting runtime to current working directory...');
-      let src: Buffer | string = readFileSync('charon-runtime.lua');
+      console.log("Extracting runtime to current working directory...");
+      let src: Buffer | string = readFileSync("charon-runtime.lua");
       if (args["global-export"]) {
-        src = src.toString()
-          .replace(/local (charon.+?\n)/, '$1')
-          .replace(/(return charon;)/, '-- $1');
+        src = src
+          .toString()
+          .replace(/local (charon.+?\n)/, "$1")
+          .replace(/(return charon;)/, "-- $1");
       }
-      writeFileSync('charon-runtime.lua', src);
+      writeFileSync("charon-runtime.lua", src);
       // Prevent error when using only extract runtime.
       if (args._.length === 0) return 0;
     }
     if (args._.length === 0) {
-      console.error('No input file provided! use --help for usage.');
+      console.error("No input file provided! use --help for usage.");
       return 1;
     }
     if (args["run"]) {
       if (args["output"]) {
-        console.warn('Output flag provided, but run being called. Ignoring it.');
+        console.warn(
+          "Output flag provided, but run being called. Ignoring it."
+        );
       }
-      const frag = crypto.createHash('md5')
+      const frag = crypto
+        .createHash("md5")
         .update(new Date().toString())
         .digest()
-        .toString('hex');
-      args["output"] = `__tmpcharonrt${frag}__.lua`
+        .toString("hex");
+      args["output"] = `__tmpcharonrt${frag}__.lua`;
     }
     try {
       Compiler.compileFile(args._[0], args.output, {
@@ -143,7 +154,7 @@ export default class Main {
         embedRuntime: args["embed-runtime"],
         mode: args.type as any,
         noRuntimeRequire: args["no-runtime"],
-        globalExport: args["global-export"]
+        globalExport: args["global-export"],
       });
       if (args["run"]) {
         console.log(cp.execSync(`lua ${args["output"]}`).toString());
