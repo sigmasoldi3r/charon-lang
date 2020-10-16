@@ -39,9 +39,9 @@ export function isInvoke(term: Term): term is Invoke {
   return term.type === 'Invoke';
 }
 
-export function isWildcard(term: Term): term is WILDCARD {
-  return term.type === 'Token' && term.name === 'WILDCARD';
-}
+// export function isWildcard(term: Term): term is WILDCARD {
+//   return term.type === 'Token' && term.name === 'WILDCARD';
+// }
 
 export function isLiteral(term: Term): term is Literal {
   return term.type === 'Token' &&
@@ -90,13 +90,13 @@ export type Term
   | Literal
   | AccessExpression
   | NAME
-  | WILDCARD
+  // | WILDCARD
   ;
 
 export type Invoke =
   {
     type: 'Invoke';
-    target: AccessExpression | NAME | SYMBOL | WILDCARD;
+    target: AccessExpression | NAME | SYMBOL; // | WILDCARD;
     args: Term[];
   } & LocatedCode
 
@@ -164,8 +164,8 @@ export type LBRACE =
 export type RBRACE =
   { type: 'Token', value: string, name: 'RBRACE' } & LocatedCode
 
-export type WILDCARD =
-  { type: 'Token', value: string, name: 'WILDCARD' } & LocatedCode
+// export type WILDCARD =
+//   { type: 'Token', value: string, name: 'WILDCARD' } & LocatedCode
 
 export type _ =
   { type: 'Token', value: string, name: '_' } & LocatedCode

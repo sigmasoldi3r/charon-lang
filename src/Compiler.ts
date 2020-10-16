@@ -125,6 +125,8 @@ Please do not hesitate to provide additional steps for reproduction.
   public target: number;
 
   private skipNextStatementSeparator: boolean = false;
+  private closureIsRecursing: boolean = false;
+  private closureReference: DataPlace | null = null;
 
   private constructor(
     private readonly upper: Optional<Compiler> = null,
@@ -214,6 +216,7 @@ Please do not hesitate to provide additional steps for reproduction.
         return `\nreturn ${this.nsRef};\n`;
       })();
     } catch (err) {
+      console.error(err);
       throw new CompileError(sourceName, input.toString(), err);
     }
   }
@@ -399,16 +402,12 @@ Please do not hesitate to provide additional steps for reproduction.
         return this.genWhen(invoke, args);
       case '#do':
         return `(function(${this.closure}) ${this.termListLastReturns(args)} end)(${this.closure})`;
-      case '#for': {
+      case '#for':
         return new Compiler(this, this.pureContext, this.options).genFor(invoke);
-      }
-      case '#fn': {
-        const arg0 = args[0];
-        if (!ast.isList(arg0))
-          throw new SyntaxError(`Function expression's first argument must be a binding vector!`, invoke._location);
-        const argInput = this.genBindingVector(arg0);
-        return `(function() local __self_ref__; __self_ref__ = (function(${argInput}) ${this.termListLastReturns(args.slice(1))} end); return __self_ref__; end)()`;
-      }
+      case '#for-in':
+        return new Compiler(this, this.pureContext, this.options).genForIn(invoke);
+      case '#fn':
+        return this.genLambda(invoke, args);
       case '#try': {
         const catching = this.termListLastReturns(args.filter(isCatch));
         const trying = this.termListLastReturns(args.filter(not(isCatch)));
@@ -491,6 +490,32 @@ Please do not hesitate to provide additional steps for reproduction.
       throw new ReferenceError(name.value, `Undefined macro ${name}`, invoke._location);
     }
     return macro(ref?.name ?? '', args);
+  }
+
+  /**
+   * Generates the lambda expression (fn [args] ...)
+   * @param invoke 
+   * @param args 
+   */
+  private genLambda(invoke: ast.Invoke, args: ast.Term[]) {
+    const arg0 = args[0];
+    if (!ast.isList(arg0))
+      throw new SyntaxError(`Function expression's first argument must be a binding vector!`, invoke._location);
+    const argInput = this.genBindingVector(arg0);
+    const body = this.termListLastReturns(args.slice(1));
+    this.closureReference = {
+      name: '__lambda' + createHash('md5').update(new Date().toString() + '#fn').digest('hex').slice(8) + '__',
+      original: '__anonymous__',
+      kind: this.pureContext ? DataKind.FUNC : DataKind.IMPURE_FUNC,
+      scope: Scope.LOCAL
+    };
+    if (this.closureIsRecursing) {
+      // Self-referencing anonymous function.
+      const ref = this.closureReference;
+      return `(function() local ${ref}; ${ref} = (function(${argInput}) ${body} end); return ${ref}; end)()`;
+    } else {
+      return `function(${argInput}) ${body} end`;
+    }
   }
 
   /**
@@ -650,6 +675,29 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
   }
 
   /**
+   * Generates the code for a plain for-in (plain for ... in ... without pairs).
+   * @param invoke
+   */
+  private genForIn(invoke: ast.Invoke): string {
+    const { args } = invoke;
+    const args0 = args[0];
+    if (!ast.isList(args0)) {
+      throw new SyntaxError(`For-In loop first argument must be a binding vector!`, args0._location);
+    }
+    const binders = args0.values.slice(0, args0.values.length - 1).map(term => {
+      if (term.type !== 'Token' || term.name !== 'NAME') {
+        throw new SyntaxError(`For-In loop binding variables must be names!`, term._location);
+      }
+      this.registerVar(term, DataKind.LOCAL, Scope.LOCAL);
+      return this.genTerm(term);
+    });
+    const iterator = this.genTerm(args0.values[args0.values.length - 1]);
+    const block = args.slice(1).map(this.genTerm.bind(this)).join(';');
+    const body = `for ${binders} in ${iterator} do ${block} end`
+    return `(function(${this.closure}) ${body} end)(${this.closure})`;
+  }
+
+  /**
    * Generates the code for an optimized for binding.
    * @param invoke
    */
@@ -737,21 +785,21 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
         };
         return this.genInvoke(getter);
       }
-    } else if (ast.isName(invoke.target) || ast.isWildcard(invoke.target)) {
+    } else if (ast.isName(invoke.target)) { // || ast.isWildcard(invoke.target)) {
       const target = invoke.target;
-      if (ast.isWildcard(target)) {
-        if (target.value !== '#\'') {
-          throw new SyntaxError(`Unexpected token ${target.value}`, target._location);
-        }
-        const args = invoke.args.map(term => {
-          const out = this.genTerm(term);
-          if (out[0] === '#') {
-            return this.tryFallbackMacro(term);
-          }
-          return out;
-        }).join();
-        return `__self_ref__(${args})`;
-      }
+      // if (ast.isWildcard(target)) {
+      //   if (target.value !== '#\'') {
+      //     throw new SyntaxError(`Unexpected token ${target.value}`, target._location);
+      //   }
+      //   const args = invoke.args.map(term => {
+      //     const out = this.genTerm(term);
+      //     if (out[0] === '#') {
+      //       return this.tryFallbackMacro(term);
+      //     }
+      //     return out;
+      //   }).join();
+      //   return `__self_ref__(${args})`;
+      // }
       const ref = this.getCheckedReference(target);
       if (this.pureContext && ref.kind === DataKind.IMPURE_FUNC) {
         throw new PurityViolationError(`Impure functions cannot be invoked from a pure context!`, invoke._location);
@@ -841,7 +889,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
   private getCheckedReference(name: ast.NAME): DataPlace {
     const { value: str } = name;
     const ref = this.get(str);
-    if (ref == null) throw new ReferenceError(str, `Undefined reference to '${str}'`, name._location);
+    if (ref == null) throw new ReferenceError(str, `Undefined reference to ${JSON.stringify(str)}`, name._location);
     return ref;
   }
 
@@ -932,6 +980,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       local = this.registerVar(name, pure ? DataKind.FUNC : DataKind.IMPURE_FUNC, Scope.PACKAGE);
     }
     const $ = new Compiler(this, pure, this.options);
+    $.closureReference = local;
     let vArgs: null | ast.NAME = null;
     let shouldVArg = false
     const naturalArgs: ast.List = { type: 'List', values: [], _location: bind._location };
@@ -960,7 +1009,8 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
         spread = '...'
       }
     }
-    return `${this.genScopedRef(local)} = (function() local __self_ref__; __self_ref__ = function(${args}${spread})${vArgsCode} ${$.genDefnBody(invoke)} end; return __self_ref__; end)()`;
+    const body = $.genDefnBody(invoke);
+    return `${this.genScopedRef(local)} = function(${args}${spread})${vArgsCode} ${body} end`;
   }
 
   private readonly DEFS = {
@@ -982,7 +1032,24 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
     let i = 0;
     for (const item of terms) {
       let eos = ';';
-      const term = this.genTerm(item);
+      let term: string
+      if (item.type === 'Invoke' && item.target.type === 'Token' && item.target.value === 'rec') {
+        if (this.closureReference?.original == null) {
+          throw new ReferenceError(`Undefined recursive reference. Are you sure that you're calling (rec ...) inside a function?`);
+        }
+        term = this.genTerm({
+          type: 'Invoke',
+          target: {
+            type: 'Token',
+            name: 'NAME',
+            value: this.closureReference.original,
+            _location: item.target._location
+          },
+          _location: item._location
+        } as any);
+      } else {
+        term = this.genTerm(item);
+      }
       if (this.skipNextStatementSeparator) {
         this.skipNextStatementSeparator = false;
         eos = '';
@@ -1067,7 +1134,7 @@ ${formatCodeSlice(this.code, key._location, 2)}`);
       }
       case 'Token':
         switch (term.name) {
-          case 'WILDCARD': throw new SyntaxError(`Unexpected wildcard symbol.`, term._location);
+          // case 'WILDCARD': throw new SyntaxError(`Unexpected wildcard symbol.`, term._location);
           case 'NAME': {
             const local = this.get(term.value);
             if (local == null) return this.translateName(term.value, term._location);

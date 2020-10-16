@@ -68,11 +68,11 @@ export const stdlib = {
       name: '#let'
       , kind: DataKind.MACRO_FUNC
     }),
-  '__self_ref__':
-    _({
-      name: '__self_ref__'
-      , kind: DataKind.LOCAL
-    }),
+  // '__self_ref__':
+  //   _({
+  //     name: '__self_ref__'
+  //     , kind: DataKind.LOCAL
+  //   }),
   'if':
     _({
       name: '#if'
@@ -101,6 +101,11 @@ export const stdlib = {
   'for':
     _({
       name: '#for'
+      , kind: DataKind.MACRO_FUNC
+    }),
+  'for-in':
+    _({
+      name: '#for-in'
       , kind: DataKind.MACRO_FUNC
     }),
   'fn':

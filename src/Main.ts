@@ -90,6 +90,12 @@ export default class Main {
         alias: 'u',
         describe: 'Runs the script instead of compiling it.'
       })
+      .option('debug', {
+        default: false,
+        type: 'boolean',
+        alias: 'd',
+        describe: 'Runs the compiler in debug mode, tracing compiler\'s internal code if an error occurs.'
+      })
       // Options to be implemented:
       .option('type', {
         default: 'module',
@@ -147,6 +153,12 @@ export default class Main {
         console.error(err.message);
         if (err.cause instanceof CharonError && err.cause.cause != null) {
           console.error(err.cause.cause.message);
+          if (args["debug"]) {
+            console.error(err.cause);
+          }
+        }
+        if (args["debug"]) {
+          console.error(err.stack);
         }
       } else {
         console.error(err);

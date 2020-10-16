@@ -1,0 +1,17 @@
+
+(defn normal [a b] (+ a b))
+
+(defn named [a]
+  (if (= a 0)
+    a
+    (rec (- a 1))))
+
+(def anon
+  (fn [a b] (+ a b)))
+
+(def anon-rec
+  (fn [a]
+    (if (= a 0)
+      a
+      (rec (- a 1)))))
+
