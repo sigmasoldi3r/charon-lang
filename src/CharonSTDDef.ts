@@ -228,6 +228,10 @@ export const stdlib = {
     name: "#when",
     kind: DataKind.MACRO_FUNC,
   }),
+  case: _({
+    name: "#case",
+    kind: DataKind.MACRO_FUNC,
+  }),
   unit: _({
     name: "charon.Unit",
     kind: DataKind.LOCAL,

@@ -463,8 +463,13 @@ Please do not hesitate to provide additional steps for reproduction.
         const otherwise = this.termListLastReturns(args.slice(2));
         return `(function(${this.closure}) if ${condition} then return ${then}; else ${otherwise} end end)(${this.closure})`;
       }
-      case "#when":
-        return this.genWhen(invoke, args);
+      case "#when": {
+        const condition = this.genTerm(args[0]);
+        const then = this.termListLastReturns(args.slice(1));
+        return `(function(${this.closure}) if ${condition} then ${then} end end)(${this.closure})`;
+      }
+      case "#case":
+        return this.genCase(invoke, args);
       case "#do":
         return `(function(${this.closure}) ${this.termListLastReturns(
           args
@@ -647,7 +652,7 @@ Please do not hesitate to provide additional steps for reproduction.
    * @param invoke
    * @param args
    */
-  private genWhen(invoke: ast.Invoke, args: ast.Term[]) {
+  private genCase(invoke: ast.Invoke, args: ast.Term[]) {
     const condition = this.genTerm(args[0]);
     if ((args.length - 1) % 2 !== 0) {
       throw new SyntaxError(
