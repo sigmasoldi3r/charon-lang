@@ -157,7 +157,12 @@ export default class Main {
         globalExport: args["global-export"],
       });
       if (args["run"]) {
-        console.log(cp.execSync(`lua ${args["output"]}`).toString());
+        try {
+          console.log(cp.execSync(`lua ${args["output"]}`).toString());
+        } catch (err) {
+          console.log(err.stdout.toString());
+          console.error(err.stderr.toString());
+        }
       }
     } catch (err) {
       if (err instanceof CompileError) {

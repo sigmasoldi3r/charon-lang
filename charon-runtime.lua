@@ -25,6 +25,9 @@ SOFTWARE.
   Charon language standard library runtime.
 ]]
 local charon = {}
+local function throw(msg, ...)
+  error(tostring(msg) .. "\n" .. debug.traceback(), ...);
+end
 
 ------- Types References -------
 
@@ -33,7 +36,7 @@ local Unit = setmetatable({}, {
   __name = 'Unit',
   __tostring = function() return 'Unit'; end,
   __concat = strcat,
-  __call = function() error 'Attempting to call unit value!'; end
+  __call = function() throw 'Attempting to call unit value!'; end
 })
 charon.True = true
 charon.False = false
@@ -43,7 +46,7 @@ local Symbol = {
   __name = 'Symbol',
   __tostring = function(self) return ':' .. self.value; end,
   __concat = strcat,
-  __call = function(self) error('Attempting to call symbol ' .. self .. '!'); end
+  __call = function(self) throw('Attempting to call symbol ' .. tostring(self) .. '!'); end
 };
 local symbols = {};
 
@@ -53,7 +56,7 @@ local Atom = {
     return 'atom{' .. tostring(self.value) .. '}';
   end,
   __concat = strcat,
-  __call = function(self) error('Attempting to call atom ' .. self .. '!'); end
+  __call = function(self) throw('Attempting to call atom ' .. tostring(self) .. '!'); end
 }
 
 local List = {
@@ -77,7 +80,7 @@ local List = {
     return self == b;
   end,
   __concat = strcat,
-  __call = function(self) error('Attempting to call list ' .. self .. '!'); end
+  __call = function(self) throw('Attempting to call list ' .. tostring(self) .. '!'); end
 }
 
 -- Table metatable
@@ -91,7 +94,7 @@ local Table = {
     return '{ ' .. paired .. '}';
   end,
   __concat = strcat,
-  __call = function(self) error('Attempting to call table ' .. self .. '!'); end
+  __call = function(self) throw('Attempting to call table ' .. tostring(self) .. '!'); end
 }
 
 ------- Runtime Functions -------
@@ -166,9 +169,9 @@ crd_parse_any = function(stream)
   elseif token:match('[\n \t\r]') then
     stream:next();
   elseif token == nil then
-    error('Unexpected end of input');
+    throw('Unexpected end of input');
   else
-    error('Unexpected token ' .. tostring(token));
+    throw('Unexpected token ' .. tostring(token));
   end
 end
 
@@ -237,7 +240,7 @@ function charon.type(value)
   elseif type == 'nil' then
     return charon.symbol'nothing';
   else
-    error'Unexpected type found.';
+    throw'Unexpected type found.';
   end
 end
 
@@ -652,7 +655,7 @@ end
 
 function charon.opaque_call(fn)
   if fn == Unit then
-    error('Unit is not callable!');
+    throw('Unit is not callable!');
   end
   fn();
   return Unit;
@@ -681,7 +684,7 @@ end
   are not supported by Charon.
 ]]
 function charon.string_find(str, ...)
-  return charon.list(str:find(...));
+  return charon.list{str:find(...)};
 end
 
 --[[
@@ -689,7 +692,7 @@ end
   are not supported by Charon.
 ]]
 function charon.string_match(str, ...)
-  return charon.list(str:match(...));
+  return charon.list{str:match(...)};
 end
 
 function charon.compose(a, b)
@@ -877,7 +880,7 @@ end
 
 -- Mapping for macro xor
 function charon.xor(...)
-  error('Not implemented');
+  throw('Not implemented');
 end
 
 -- Namespace.
