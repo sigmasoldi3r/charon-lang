@@ -1,0 +1,62 @@
+;;;
+; Main player script.
+; Controls the player's behaviour.
+;;;
+(def gravity 9.81)
+
+; Acquire input focus
+(defn! init [self] :global
+  (declare msg)
+  (msg::post "." "acquire_input_focus")
+  (object/set self :speed_y 0)
+  (object/set self :jump_power 500)
+  (object/set self :move_speed 12.5)
+  (object/set self :touching_ground false))
+
+; Move the game object in the given axis.
+; Axis should be one of :x, :y or :z
+(defn! move [dir amt]
+  (declare go)
+  (let [p (go::get_position)]
+    (object/set p dir (+ (object/get p dir) amt))
+    (go::set_position p)))
+
+; Handle messages
+(defn! on_message [self message-id message sender] :global
+  (declare hash)
+  (declare go)
+  (if (= (hash "contact_point_response") message-id)
+    (let [p (go::get_position)
+          p' (+ p (* message::normal message::distance))]
+      (object/set self :touching_ground true)
+      (go::set_position p'))))
+
+; Update mechanics.
+(defn! update [self dt] :global
+  (object/set self :speed_y (- self::speed_y gravity))
+  (move :y (* dt self::speed_y)))
+
+; Jump action
+(defn! jump! [self]
+  (if (object/get self :touching_ground)
+    (do
+      (object/set self :touching_ground false)
+      (object/set self :speed_y (object/get self :jump_power)))))
+
+; Lateral impulse
+(defn! go! [self dir]
+  (declare sprite)
+  (when dir
+    :left (sprite::set_hflip "#body" false)
+    :right (sprite::set_hflip "#body" true)
+    _ (throw (str "Unknown dir " dir)))
+  (move :x (* (object/get self :move_speed) (if (= dir :right) 1 -1))))
+
+; Input handler for the player.
+(defn! on_input [self action-id action] :global
+  (declare hash)
+  (declare go)
+  (when action-id
+    (hash "space") (jump! self)
+    (hash "right") (go! self :right)
+    (hash "left") (go! self :left)))
