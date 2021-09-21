@@ -25,7 +25,7 @@ SOFTWARE.
 local class, operator
 do
   local pandora = (function()
-    
+    {{pandora}}
   end)()
   class = pandora.class
   operator = pandora.operator

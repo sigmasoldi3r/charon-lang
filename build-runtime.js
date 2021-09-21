@@ -22,25 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 /**
- * Build script.
- * Avoids cross platform issues for chaining scripts without having to install
- * extra packages.
+ * Builds the Lua runtime from a template.
  */
-const { execSync } = require('child_process');
+const fs = require('fs')
+const http = require('http')
+const Handlebars = require('handlebars')
 
-try {
-  // Refresh pegjs
-  execSync('pegjs -o src/charon.generated.js resources/charon.pegjs')
+const template = Handlebars.compile(
+  fs.readFileSync('runtime-template.lua').toString())
 
-  // Refresh Lua runtime
-  require('./build-runtime')
-
-  // Run typescript
-  execSync('tsc')
-
-  // Rollup
-  execSync('rollup -c rollup.config.js')
-} catch (error) {
-  console.error(error.output[1].toString(), error.output[2].toString());
-  throw error;
-}
+fs.writeFileSync('charon-runtime.lua', template({
+  pandora: ''
+}))
